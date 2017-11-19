@@ -7,7 +7,7 @@
   @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED
 
   *Version release
-    v0.1.1116   s.osafune@j7system.jp
+    v0.1.119   s.osafune@j7system.jp
 
   *Support Firmware version
     W4.00.01
@@ -60,11 +60,13 @@ local lshift = require "bit32".lshift
 ca = {}
 
 -- バージョン
-function ca.version() return "0.1.1116" end
+function ca.version() return "0.1.1119" end
 
 -- 進捗表示（必要な場合は外部で定義する）
 function ca.progress(funcname, ...) end
 
+-- fa.i2cの正常レスポンス
+local _r_OK = "OK\n" --<Measures for W4.00.01>--
 
 ------------------------------------------------------------------------------------
 -- AvalonMMバスアクセス
@@ -74,6 +76,7 @@ function ca.progress(funcname, ...) end
 --   avm.i2cfreq : I2Cの通信速度
 --   avm.rdsplit : memrdのバースト長
 --   avm.wrsplit : memwrのバースト長
+--   avm.addrbst : アドレスバイト開始位置(24,16,8,0)
 --   avm.close() : クローズメソッド
 --   avm.iord() : I/Oリードメソッド
 --   avm.iowr() : I/Oライトメソッド
@@ -85,22 +88,22 @@ local _devindex = {}
 
 -- I2Cバスオープン：共通
 local _busopen = function(avm)
-  return (_devindex[avm.devid] and i2c{mode="init", freq=avm.i2cfreq}=="OK\n") --<Measures for W4.00.01>--
+  return (_devindex[avm.devid] and i2c{mode="init", freq=avm.i2cfreq}==_r_OK)
 end
 
 -- I2Cデバイスオープン：共通
 local _devopen = function(avm, addr)
   local res = i2c{mode="start", address=avm.devid, direction="write"}
-  if res~="OK\n" then --<Measures for W4.00.01>--
+  if res ~= _r_OK then
     i2c{mode="stop"}
     return false,"device start error / "..res
   end
 
   res = true
   local t = {mode="write", data=0}
-  for i=24,0,-8 do
+  for i=avm.addrbst,0,-8 do
     t.data = extract(addr, i, 8)
-    if i2c(t)~="OK\n" then res = false; break end --<Measures for W4.00.01>--
+    if i2c(t) ~= _r_OK then res = false; break end
   end
   if not res then
     i2c{mode="stop"}
@@ -119,20 +122,20 @@ end
 -- AvalonMM I/Oリードメソッド
 local _avm_iord = function(self, addr)
   if not _busopen(self) then return nil,"device is not open" end
-  if type(addr)~="number" then return nil,"parameter error" end
+  if type(addr) ~= "number" then return nil,"parameter error" end
   if btest(addr, 0x3) then return nil,"invalid addressing" end
 
   local res,mes = _devopen(self, addr)
   if not res then return nil,mes end
 
-  if i2c{mode="restart", address=self.devid, direction="read"}~="OK\n" then --<Measures for W4.00.01>--
+  if i2c{mode="restart", address=self.devid, direction="read"} ~= _r_OK then
     i2c{mode="stop"}
     return nil,"device restart error"
   end
 
   local res,b0,b1,b2,b3 = i2c{mode="read", bytes=4, type="binary"}
   i2c{mode="stop"}
-  if res~="OK\n" then return nil,"I/O read error" end --<Measures for W4.00.01>--
+  if res ~= _r_OK then return nil,"I/O read error" end
 
   return bor(lshift(b3, 24), lshift(b2, 16), lshift(b1, 8), b0)
 end
@@ -140,16 +143,16 @@ end
 -- AvalonMM I/Oライトメソッド
 local _avm_iowr = function(self, addr, wdat)
   if not _busopen(self) then return nil,"device is not open" end
-  if type(addr)~="number" or type(wdat)~="number" then return nil,"parameter error" end
+  if type(addr) ~= "number" or type(wdat) ~= "number" then return nil,"parameter error" end
   if btest(addr, 0x3) then return nil,"invalid addressing" end
 
   local res,mes = _devopen(self, addr)
   if not res then return nil,mes end
 
   local t = {mode="write", data=0}
-  for i=0,24,8 do
+  for i=0,24,8 do  --<Measures for W4.00.01>--
     t.data = extract(wdat, i, 8)
-    if i2c(t)~="OK\n" then res = false; break end --<Measures for W4.00.01>--
+    if i2c(t) ~= _r_OK then res = false; break end
   end
   i2c{mode="stop"}
   if not res then return nil,"I/O write error" end
@@ -160,14 +163,14 @@ end
 -- AvalonMM メモリリードメソッド
 local _avm_memrd = function(self, addr, size)
   if not _busopen(self) then return nil,"device is not open" end
-  if type(addr)~="number" or type(size)~="number" then return nil,"parameter error" end
-  if size<1 then return "" end
+  if type(addr) ~= "number" or type(size) ~= "number" then return nil,"parameter error" end
+  if size < 1 then return "" end
 
   local t_stop = {mode="stop"}
   local t_read = {mode="read", bytes=0, type="binary"}
   local _strread = function(r, ...)
     i2c(t_stop)
-    if r~="OK\n" then return nil,"memory read error" end --<Measures for W4.00.01>--
+    if r ~= _r_OK then return nil,"memory read error" end
     return schar(...)
   end
 
@@ -177,17 +180,17 @@ local _avm_memrd = function(self, addr, size)
   
   local rstr = ""
   
-  while size>0 do
-    if i2c{mode="start", address=self.devid, direction="read"}~="OK\n" then --<Measures for W4.00.01>--
+  while size > 0 do
+    if i2c{mode="start", address=self.devid, direction="read"} ~= _r_OK then
       i2c(t_stop)
       res,mes = nil,"device current start error"
       break
     end
 
     local len = size
-    if len>self.rdsplit then len = self.rdsplit end
+    if len > self.rdsplit then len = self.rdsplit end
     t_read.bytes = len
-    res,mes = _strread(i2c(t_read))
+    res,mes = _strread(i2c(t_read)) --<Measures for W4.00.01>--
     if not res then break end
     --[[
     local str = string.format("READ addr %08x :",addr)
@@ -208,8 +211,8 @@ end
 -- AvalonMM メモリライトメソッド
 local _avm_memwr = function(self, addr, wstr)
   if not _busopen(self) then return nil,"device is not open" end
-  if type(addr)~="number" or type(wstr)~="string" then return nil,"parameter error" end
-  if #wstr<1 then return true end
+  if type(addr) ~= "number" or type(wstr) ~= "string" then return nil,"parameter error" end
+  if #wstr < 1 then return true end
 
   local t_stop = {mode="stop"}
   local t_write = {mode="write", data=0}
@@ -222,9 +225,9 @@ local _avm_memwr = function(self, addr, wstr)
     local r,m = _devopen(self, a)
     if not r then return nil,m end
 
-    for _,b in ipairs{s:byte(1, -1)} do
+    for _,b in ipairs{s:byte(1, -1)} do --<Measures for W4.00.01>--
       t_write.data = b
-      if i2c(t_write)~="OK\n" then r = nil; break end --<Measures for W4.00.01>--
+      if i2c(t_write) ~=_r_OK then r = nil; break end
     end
     i2c(t_stop)
 
@@ -239,7 +242,7 @@ local _avm_memwr = function(self, addr, wstr)
 
   -- 4バイト境界に揃っていない先頭部分の処理
   local aa = addr % 4
-  if aa~=0 then
+  if aa ~= 0 then
     for i=aa,3 do
       res,mes = _strwrite(addr, wstr:sub(n, n))
       if not res then break end
@@ -254,12 +257,12 @@ local _avm_memwr = function(self, addr, wstr)
 
   -- 4バイト境界転送
   local es = size % 4
-  if es~=0 then
+  if es ~= 0 then
     size = size - es
   end
-  while size>0 do
+  while size > 0 do
     local len = size
-    if len>self.wrsplit then len = self.wrsplit end
+    if len > self.wrsplit then len = self.wrsplit end
 
     res,mes = _strwrite(addr, wstr:sub(n, n+len-1))
     if not res then break end
@@ -270,7 +273,7 @@ local _avm_memwr = function(self, addr, wstr)
   end
 
   -- 4バイト境界に揃っていない後端部分の処理
-  if res and es~=0 then
+  if res and es ~= 0 then
     for i=1,es do
       res,mes = _strwrite(addr, wstr:sub(n, n))
       if not res then break end
@@ -287,26 +290,18 @@ end
 
 -- AvalonMMデバイスのオープンとオブジェクトインスタンス
 function ca.open(t)
-  if pio(0x00, 0x00)==0 then return nil,"GPIO is not ready" end
+  if pio(0x00, 0x00) == 0 then return nil,"GPIO is not ready" end
 
   local _,d = pio(0x00, 0x00)
   if not btest(d, 0x10) then return nil,"device is not configured" end
   
   -- ローカルパラメータ設定
+  local dev = 0x55
   local freq = 400
+  local adb = 4
   local rds = 16
   local wrs = 256
-  local dev = 0x55
-  if t and type(t)=="table" then
-    -- t.i2cfreq : I2Cの通信速度(100または400、デフォルト400)
-    if type(t.i2cfreq)=="number" and (t.i2cfreq==100 or t.i2cfreq==400) then freq = t.i2cfreq end
-
-    -- t.rdsplit : リードデータバースト長(4以上で4の倍数を指定、デフォルト16)
-    if type(t.rdsplit)=="number" and t.rdsplit>=4 and (t.rdsplit % 4)==0 then rds = t.rdsplit end
-
-    -- t.wrsplit : ライトデータバースト長(4以上で4の倍数を指定、デフォルト256)
-    if type(t.wrsplit)=="number" and t.wrsplit>=4 and (t.wrsplit % 4)==0 then wrs = t.wrsplit end
-
+  if t and type(t) == "table" then
     -- t.devid : I2CデバイスIDの指定(デフォルト0x55)
     if type(t.devid)=="number" then
       if t.devid>=0x00 and t.devid<=0x7f then
@@ -314,6 +309,26 @@ function ca.open(t)
       else
         return nil,"invalid device ID"
       end
+    end
+
+    -- t.i2cfreq : I2Cの通信速度(100または400、デフォルト400)
+    if type(t.i2cfreq) == "number" and (t.i2cfreq == 100 or t.i2cfreq == 400) then
+      freq = t.i2cfreq
+    end
+
+    -- t.addrbytes : デバイスのアドレスバイト数(1,2,3,4のいずれか、デフォルト4)
+    if type(t.addrbytes) == "number" and t.addrbytes>=1 and t.addrbytes<=4 then
+      adb = t.addrbytes
+    end
+
+    -- t.rdsplit : リードデータバースト長(4以上で4の倍数を指定、デフォルト16)
+    if type(t.rdsplit) == "number" and t.rdsplit >= 4 and (t.rdsplit % 4)== 0 then
+      rds = t.rdsplit
+    end
+
+    -- t.wrsplit : ライトデータバースト長(4以上で4の倍数を指定、デフォルト256)
+    if type(t.wrsplit) == "number" and t.wrsplit >= 4 and (t.wrsplit % 4)== 0 then
+      wrs = t.wrsplit
     end
   end
 
@@ -323,6 +338,7 @@ function ca.open(t)
   return {
       devid = dev,
       i2cfreq = freq,
+      addrbst = (adb - 1) * 8,
       rdsplit = rds,
       wrsplit = wrs,
       close = _avm_close,
@@ -349,7 +365,7 @@ end
 ------------------------------------------------------------------------------------
 
 function ca.config(t)
-  if pio(0x00, 0x00)==0 then return false,"GPIO is not ready" end
+  if pio(0x00, 0x00) == 0 then return false,"GPIO is not ready" end
 
   -- 引数無しの場合はコンフィグレーション状態を返す
   if not t then
@@ -358,22 +374,22 @@ function ca.config(t)
   end
 
   -- ローカルパラメータ設定
-  if type(t)~="table" then return false,"parameter error" end
+  if type(t) ~= "table" then return false,"parameter error" end
 
   -- t.file : コンフィグレーションするRBFファイル名(必須)
   local fname = t.file
 
   -- t.cache : キャッシュファイルの使用(trueか非ゼロ、デフォルトtrue)
   local usecache = true
-  if type(t.cache)~="nil" and (not t.cache or t.cache==0) then usecache = false end
+  if type(t.cache) ~= "nil" and (not t.cache or t.cache == 0) then usecache = false end
 
   -- t.timeout : タイムアウト時間(ms単位で10以上を指定、デフォルト10)
   local timeout = 10
-  if type(t.timeout)=="number" and t.timeout>10 then timeout = t.timeout end
+  if type(t.timeout) == "number" and t.timeout > 10 then timeout = t.timeout end
 
   -- t.retry : リトライ回数(0以上を指定、デフォルト3)
   local trynumber = 3
-  if type(t.retry)=="number" and t.retry>=0 then trynumber = t.retry + 1 end
+  if type(t.retry) == "number" and t.retry >= 0 then trynumber = t.retry + 1 end
 
 
   -- RBFキャッシュファイル作成
@@ -506,7 +522,7 @@ end
 
 -- バイナリデータロード : ファイルを指定のアドレスに読み込む
 function ca.binload(avm, fname, offset)
-  if type(offset)~="number" then offset = 0 end
+  if type(offset) ~= "number" then offset = 0 end
 
   ca.progress("binload", 0)
 
@@ -520,7 +536,7 @@ function ca.binload(avm, fname, offset)
   local mes
 
   local aa = offset % 4
-  if aa~=0 then
+  if aa ~= 0 then
     local len = 4 - aa
     local data = fbin:read(len)
     if data then
@@ -551,8 +567,8 @@ end
 
 -- バイナリデータセーブ : 指定のメモリエリアをファイルに書き出す
 function ca.binsave(avm, fname, size, offset)
-  if not(type(size)=="number" and size>0) then return false,"parameter error" end
-  if type(offset)~="number" then offset = 0 end
+  if not(type(size) == "number" and size > 0) then return false,"parameter error" end
+  if type(offset) ~= "number" then offset = 0 end
 
   ca.progress("binsave", 0)
 
@@ -562,9 +578,9 @@ function ca.binsave(avm, fname, size, offset)
   local sz = 100 / size
   local res,mes
 
-  while size>0 do
+  while size > 0 do
     local len = size
-    if len>256 then len = 256 end
+    if len > 256 then len = 256 end
 
     res,mes = avm:memrd(offset, len)
     if not res then break end
@@ -585,7 +601,7 @@ end
 
 -- ROMデータロード : IntelHEXまたはモトローラSファイルをメモリに読み込む
 function ca.hexload(avm, fname, offset)
-  if type(offset)~="number" then offset = 0 end
+  if type(offset) ~= "number" then offset = 0 end
 
   ca.progress("hexload", 0)
   
@@ -607,18 +623,18 @@ function ca.hexload(avm, fname, offset)
     local sum = count + extract(addr, 8, 8) + extract(addr, 0, 8) + rtype
     local data = ""
     
-    if rtype==2 or rtype==4 then
+    if rtype == 2 or rtype == 4 then
       local ea = tonumber(ln:sub(10, 13), 16)
       if not ea then return false,"invalid charactors" end
 
       sum = sum + extract(ea, 8, 8) + extract(ea, 0, 8)
-      if rtype==2 then
+      if rtype == 2 then
         ext_addr = lshift(ea, 4)  -- 拡張セグメントアドレス
       else
         ext_addr = lshift(ea, 16) -- 拡張リニアアドレス
       end
 
-    elseif rtype==0 then          -- データレコード
+    elseif rtype == 0 then        -- データレコード
       local n = 10
       local c = true
       for i=1,count do
@@ -639,7 +655,7 @@ function ca.hexload(avm, fname, offset)
 
     if btest(sum+b, 0xff) then return false,"checksum error" end
 
-    if rtype~=0 then return true end
+    if rtype ~= 0 then return true end
     return avm:memwr(offset+ext_addr+addr, data)
   end
 
@@ -660,15 +676,15 @@ function ca.hexload(avm, fname, offset)
     local sum = count
     local data = ""
  
-    if rtype==1 then
+    if rtype == 1 then
       addr = tonumber(ln:sub(5, 8), 16)   -- S1レコード
       n = 9
       m = count - 3
-    elseif rtype==2 then
+    elseif rtype == 2 then
       addr = tonumber(ln:sub(5, 10), 16)  -- S2レコード
       n = 11
       m = count - 4
-    elseif rtype==3 then
+    elseif rtype == 3 then
       addr = tonumber(ln:sub(5, 12), 16)  -- S3レコード
       n = 13
       m = count - 5

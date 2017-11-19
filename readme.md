@@ -9,7 +9,7 @@ PERIDOT-AIRボード（開発中）で、FlashAirからFPGAのコンフィグレ
 ライセンス
 =========
 
-The MIT License  
+[The MIT License (MIT)](https://opensource.org/licenses/MIT)  
 Copyright (c) 2017 J-7SYSTEM WORKS LIMITED
 
 
@@ -20,6 +20,11 @@ Copyright (c) 2017 J-7SYSTEM WORKS LIMITED
 - Intel FPGA (CycloneIV E, Cyclone10 LP, MAX10)
 - QuartusPrime 17.0以降
 
+- ターゲットとするユーザー
+  - Intel FPGAのプロジェクトビルドおよび、Intel FPGAハードウェア設計の経験がある人
+  - FlashAirを使ったハードウェアを作った経験のある人
+  - プログラミング言語としてLuaが使える人
+
 
 使い方
 =====
@@ -29,17 +34,13 @@ Copyright (c) 2017 J-7SYSTEM WORKS LIMITED
 
 FlashAirのI/OとFPGAは以下のように接続します。
 
-    CMD  <---> DATA0(SCL)
-    DAT0 <-+-> DCLK
-           +--> USER I/O(SDA)
-    DAT1 ----> nCONFIG
-    DAT2 <---- nSTATUS
-    DAT3 <---- CONF_DONE
+![schema](https://raw.githubusercontent.com/osafune/canarium_air/master/img/connection.png)
 
 - FPGAのMSELピンはPSモードに設定しておきます。
 - FlashAirの各ピンとFPGAの間には22～33Ωのダンピング抵抗を挟みます。
 - `nCONFIG`, `nSTATUS`, `CONF_DONE`は10kΩでVCCにプルアップします。
 - `DATA0(SCL)`, `USER I/O(SDA)`は2.2kΩでVCCにプルアップします。
+- それ以外のピンは適宜処理してください。
 
 FPGAプロジェクト
 ---------------
@@ -83,7 +84,7 @@ ca.version()
 
 ライブラリのバージョンを取得します。
 
-- 書式
+- 書式例
 ```Lua
 ver = ca.version()
 ```
@@ -101,9 +102,9 @@ ca.progress(*`funcname`*, *`...`*)
 ------------------------------
 
 時間のかかる処理の際に、内部で進捗度を取得するために呼ばれます。  
-この関数で進捗度を得るためにはユーザープログラム側でオーバーライトする必要があります。
+この関数で進捗度を得るためにはユーザープログラム側で上書きする必要があります。
 
-- 書式
+- 書式例
 ```Lua
 require "canarium_air"
 
@@ -116,19 +117,18 @@ end
 
 `funcname` : 内部でca.progressを呼び出している関数の識別名が *string* で格納されます。
 
-`...` : 進捗度が *number* で格納されます。値の範囲は `0~100` です。  
+`...` : 進捗度が *number* で格納されます。値の範囲は `0` ~ `100` です。  
 
-複数の処理ステージが存在する関数の場合、ステージ毎に進捗度が引数として渡されることに注意してください。
-
+複数の処理ステージが存在する関数の場合、ステージ数分の引数が渡されることに注意してください。
 
 -----
 ca.config(*`table`*)
 ------------------
 
 FPGAのコンフィグレーションを行います。
-この関数は内部で `ca.progress("config", prog1, prog2)` を呼び出します。
+この関数は内部で `ca.progress("config", prog1, prog2)` を呼び出します。*prog1* はキャッシュファイル作成の進捗度、*prog2* はFPGAコンフィグレーションの進捗度を返します。
 
-- 書式
+- 書式例
 ```Lua
 res,mes = ca.config{file="foot.rbf"}
 ```
@@ -151,7 +151,7 @@ ca.open(*`table`*)
 
 Qsysモジュールへのアクセスオブジェクトを取得します。
 
-- 書式
+- 書式例
 ```Lua
 avm,mes = ca.open()
 ```
@@ -174,7 +174,7 @@ avm,mes = ca.open()
 
 取得したアクセスオブジェクトを破棄し、クローズ処理を行います。
 
-- 書式
+- 書式例
 ```Lua
 avm,mes = ca.open()
   :
@@ -191,9 +191,9 @@ avm:close()
 --------------------
 
 取得したアクセスオブジェクトでI/Oリードを行います。  
-Qsys内部のアクセスは32bit単位で行われ、アトミックな読み出しを保証します。
+Qsys内部のアクセスは必ずバス幅(32bit単位)で行われ、ワード内でのアトミックな読み出しを保証します。
 
-- 書式
+- 書式例
 ```Lua
 avm = ca.open()
 data,mes = avm:iord(0x10000000)
@@ -213,9 +213,9 @@ data,mes = avm:iord(0x10000000)
 ------------------------------
 
 取得したアクセスオブジェクトでI/Oライトを行います。  
-Qsys内部のアクセスは32bit単位で行われ、アトミックな書き込みを保証します。
+Qsys内部のアクセスは必ずバス幅(32bit単位)で行われ、ワード内でのアトミックな書き込みを保証します。
 
-- 書式
+- 書式例
 ```Lua
 avm = ca.open()
 res,mes = avm:iowr(0x10000000, 1)
@@ -238,7 +238,7 @@ res,mes = avm:iowr(0x10000000, 1)
 
 取得したアクセスオブジェクトでメモリリードを行います。  
 
-- 書式
+- 書式例
 ```Lua
 avm = ca.open()
 rstr,mes = avm:memrd(0x10000000, 256)
@@ -261,7 +261,7 @@ rstr,mes = avm:memrd(0x10000000, 256)
 
 取得したアクセスオブジェクトでメモリライトを行います。
 
-- 書式
+- 書式例
 ```Lua
 avm = ca.open()
 wstr = "\x01\x02\x03\x04\x05\x06"
@@ -286,13 +286,13 @@ ca.binload(*`avm`*, *`file`*, *`offset`*)
 取得したアクセスオブジェクトのメモリ空間にファイルイメージをロードします。  
 この関数は内部で `ca.progress("binload", prog)` を呼び出します。
 
-- 書式
+- 書式例
 ```Lua
 avm = ca.open()
 res,mes = ca.binload(avm, "bar.bin")
 ```
 
-またはavmメソッドを利用して下記のようにも書けます。
+またはアクセスオブジェクトのメソッドを利用して下記のようにも書けます。
 
 ```Lua
 res,mes = avm:bload("bar.bin")
@@ -318,13 +318,13 @@ ca.binsave(*`avm`*, *`file`*, *`size`*, *`offset`*)
 取得したアクセスオブジェクトのメモリ空間からバイトイメージをファイルにセーブします。  
 この関数は内部で `ca.progress("binsave", prog)` を呼び出します。
 
-- 書式
+- 書式例
 ```Lua
 avm = ca.open()
 res,mes = ca.binsave(avm, "bar.bin", 8192, 0x1000)
 ```
 
-またはavmメソッドを利用して下記のようにも書けます。
+またはアクセスオブジェクトのメソッドを利用して下記のようにも書けます。
 
 ```Lua
 res,mes = avm:bsave("bar.bin", 8192, 0x1000)
@@ -352,13 +352,13 @@ ca.hexload(*`avm`*, *`file`*, *`offset`*)
 取得したアクセスオブジェクトのメモリ空間にIntelHEXまたはS-record形式のファイルをロードします。  
 この関数は内部で `ca.progress("hexload", prog)` を呼び出します。
 
-- 書式
+- 書式例
 ```Lua
 avm = ca.open()
 res,mes = ca.hexload(avm, "foo.hex")
 ```
 
-またはavmメソッドを利用して下記のようにも書けます。
+またはアクセスオブジェクトのメソッドを利用して下記のようにも書けます。
 
 ```Lua
 res,mes = avm:load("foo.hex")
