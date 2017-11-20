@@ -130,7 +130,7 @@ FPGAのコンフィグレーションを行います。
 
 - 書式例
 ```Lua
-res,mes = ca.config{file="foot.rbf"}
+res,mes = ca.config{file="foo.rbf"}
 ```
 
 - 引数テーブル
@@ -289,13 +289,13 @@ ca.binload(*`avm`*, *`file`*, *`offset`*)
 - 書式例
 ```Lua
 avm = ca.open()
-res,mes = ca.binload(avm, "bar.bin")
+res,mes = ca.binload(avm, "bar.bin", 0x2000)
 ```
 
 またはアクセスオブジェクトのメソッドを利用して下記のようにも書けます。
 
 ```Lua
-res,mes = avm:bload("bar.bin")
+res,mes = avm:bload("bar.bin", 0x2000)
 ```
 
 - 引数
@@ -304,7 +304,7 @@ res,mes = avm:bload("bar.bin")
 
 `file` : ロードするファイルを指定します。
 
-`offset` : オフセットアドレスを *string* で指定します。省略時は `0`
+`offset` : オフセットアドレスを *number* で指定します。省略時は `0`
 
 - 返値
 
@@ -338,7 +338,7 @@ res,mes = avm:bsave("bar.bin", 8192, 0x1000)
 
 `size` : 保存するバイトサイズを *number* で指定します。
 
-`offset` : 開始オフセットアドレスを *string* で指定します。省略時は `0`
+`offset` : 開始オフセットアドレスを *number* で指定します。省略時は `0`
 
 - 返値
 
@@ -370,7 +370,7 @@ res,mes = avm:load("foo.hex")
 
 `file` : ロードするIntelHEXまたはS-recordファイルを指定します。フォーマットは自動認識されます。
 
-`offset` : オフセットアドレスを *string* で指定します。省略時は `0`
+`offset` : オフセットアドレスを *number* で指定します。省略時は `0`
 
 - 返値
 
