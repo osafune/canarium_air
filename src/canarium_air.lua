@@ -7,9 +7,9 @@
   @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED
 
   *Version release
-    v0.1.119   s.osafune@j7system.jp
+    v0.1.1120   s.osafune@j7system.jp
 
-  *Support Firmware version
+  *Requirement FlashAir firmware version
     W4.00.01
 
   *FlashAir I/O connection
@@ -60,7 +60,7 @@ local lshift = require "bit32".lshift
 ca = {}
 
 -- バージョン
-function ca.version() return "0.1.1119" end
+function ca.version() return "0.1.1120" end
 
 -- 進捗表示（必要な場合は外部で定義する）
 function ca.progress(funcname, ...) end
@@ -88,7 +88,7 @@ local _devindex = {}
 
 -- I2Cバスオープン：共通
 local _busopen = function(avm)
-  return (_devindex[avm.devid] and i2c{mode="init", freq=avm.i2cfreq}==_r_OK)
+  return (_devindex[avm.devid] and i2c{mode="init", freq=avm.i2cfreq} == _r_OK)
 end
 
 -- I2Cデバイスオープン：共通
@@ -193,13 +193,13 @@ local _avm_memrd = function(self, addr, size)
     res,mes = _strread(i2c(t_read)) --<Measures for W4.00.01>--
     if not res then break end
     --[[
-    local str = string.format("READ addr %08x :",addr)
-    for _,b in ipairs{res:byte(1,-1)} do str=str..string.format(" %02x",b) end
+    local str = string.format("READ addr %08x :", addr)
+    for _,b in ipairs{res:byte(1, -1)} do str = str .. string.format(" %02x", b) end
     print(str.." ("..#res.."bytes)")
     addr = addr + len
     --]]
 
-    rstr = rstr..res
+    rstr = rstr .. res
     size = size - len
   end
 
@@ -218,8 +218,8 @@ local _avm_memwr = function(self, addr, wstr)
   local t_write = {mode="write", data=0}
   local _strwrite = function(a, s)
     --[[
-    local str = string.format("WRITE addr %08x :",a)
-    for _,b in ipairs{s:byte(1,-1)} do str=str..string.format(" %02x",b) end
+    local str = string.format("WRITE addr %08x :", a)
+    for _,b in ipairs{s:byte(1, -1)} do str = str .. string.format(" %02x", b) end
     print(str.." ("..#s.."bytes)")
     --]]
     local r,m = _devopen(self, a)
@@ -227,7 +227,7 @@ local _avm_memwr = function(self, addr, wstr)
 
     for _,b in ipairs{s:byte(1, -1)} do --<Measures for W4.00.01>--
       t_write.data = b
-      if i2c(t_write) ~=_r_OK then r = nil; break end
+      if i2c(t_write) ~= _r_OK then r = nil; break end
     end
     i2c(t_stop)
 
@@ -304,7 +304,7 @@ function ca.open(t)
   if t and type(t) == "table" then
     -- t.devid : I2CデバイスIDの指定(デフォルト0x55)
     if type(t.devid)=="number" then
-      if t.devid>=0x00 and t.devid<=0x7f then
+      if t.devid >= 0x00 and t.devid <= 0x7f then
         dev = t.devid
       else
         return nil,"invalid device ID"
@@ -317,17 +317,17 @@ function ca.open(t)
     end
 
     -- t.addrbytes : デバイスのアドレスバイト数(1,2,3,4のいずれか、デフォルト4)
-    if type(t.addrbytes) == "number" and t.addrbytes>=1 and t.addrbytes<=4 then
+    if type(t.addrbytes) == "number" and t.addrbytes >= 1 and t.addrbytes <= 4 then
       adb = t.addrbytes
     end
 
     -- t.rdsplit : リードデータバースト長(4以上で4の倍数を指定、デフォルト16)
-    if type(t.rdsplit) == "number" and t.rdsplit >= 4 and (t.rdsplit % 4)== 0 then
+    if type(t.rdsplit) == "number" and t.rdsplit >= 4 and t.rdsplit % 4 == 0 then
       rds = t.rdsplit
     end
 
     -- t.wrsplit : ライトデータバースト長(4以上で4の倍数を指定、デフォルト256)
-    if type(t.wrsplit) == "number" and t.wrsplit >= 4 and (t.wrsplit % 4)== 0 then
+    if type(t.wrsplit) == "number" and t.wrsplit >= 4 and t.wrsplit % 4 == 0 then
       wrs = t.wrsplit
     end
   end
@@ -418,14 +418,14 @@ function ca.config(t)
 
     local fs = f:seek("end")
     f:seek("set")
-    local sz = 100 / ((fs<1) and 1 or fs)
+    local sz = 100 / ((fs < 1) and 1 or fs)
 
     while true do
       local ln = f:read(256)
       if not ln then break end
 
       local rd = ""
-      for _,b in ipairs{ln:byte(1, -1)} do rd = rd..schar(rt[b]) end
+      for _,b in ipairs{ln:byte(1, -1)} do rd = rd .. schar(rt[b]) end
       fo:write(rd)
 
       ca.progress("config", f:seek()*sz, 0)
@@ -443,7 +443,7 @@ function ca.config(t)
   local _doconfig = function(f, to)
     local fs = f:seek("end")
     f:seek("set")
-    local sz = 100 / ((fs<1) and 1 or fs)
+    local sz = 100 / ((fs < 1) and 1 or fs)
 
     local c = false
     for n=1,to do
@@ -531,7 +531,7 @@ function ca.binload(avm, fname, offset)
   local fs = fbin:seek("end")
   fbin:seek("set")
 
-  local sz = 100 / ((fs<1) and 1 or fs) 
+  local sz = 100 / ((fs < 1) and 1 or fs) 
   local res = true
   local mes
 
@@ -608,7 +608,7 @@ function ca.hexload(avm, fname, offset)
   -- インテルHEXの一行をデコード
   local ext_addr = 0
   local _dec_ihex = function(ln)
-    local b = ln:sub(2 ,3)
+    local b = ln:sub(2, 3)
     if not b then return false,"byte count error" end
 
     local count = tonumber(b, 16)
@@ -640,7 +640,7 @@ function ca.hexload(avm, fname, offset)
       for i=1,count do
         local b = tonumber(ln:sub(n, n+1), 16)
         if not b then c = false; break end
-        data = data..schar(b)
+        data = data .. schar(b)
         sum = sum + b
         n = n + 2
       end
@@ -699,7 +699,7 @@ function ca.hexload(avm, fname, offset)
     for i=1,m do
       local b = tonumber(ln:sub(n, n+1), 16)
       if not b then c = false; break end
-      data = data..schar(b)
+      data = data .. schar(b)
       sum = sum + b
       n = n + 2
     end
