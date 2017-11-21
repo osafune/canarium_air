@@ -64,7 +64,7 @@ FlashAirのGPIOモードを使用します。`/SD_WLAN/CONFIG` ファイルに `
 require "/<フォルダパス>/canarium_air"
 
 -- FPGAのコンフィグレーション
-ca.config{file="<RBFファイルの場所>"}
+ca.config{file="<RBFファイルのフルパス>"}
 
 -- Qsysモジュールアクセス
 avm = ca.open()
@@ -130,14 +130,14 @@ FPGAのコンフィグレーションを行います。
 
 - 書式例
 ```Lua
-res,mes = ca.config{file="foo.rbf"}
+res,mes = ca.config{file="/foo/bar.rbf"}
 ```
 
 - 引数テーブル
 
 | メンバ | タイプ | 指定 | 説明 |
 |:---:|:---:|:---:|:---|
-| `file` | *string* | 必須 | RBFファイル名を指定します |
+| `file` | *string* | 必須 | RBFファイル名を指定します。ファイル名はフルパスで設定します。 |
 | `cache` | *boolean* | オプション | キャッシュファイルの使用を指示します。省略時 `true` |
 
 - 返値
@@ -289,20 +289,20 @@ ca.binload(*`avm`*, *`file`*, *`offset`*)
 - 書式例
 ```Lua
 avm = ca.open()
-res,mes = ca.binload(avm, "bar.bin", 0x2000)
+res,mes = ca.binload(avm, "/foo/bar.bin", 0x2000)
 ```
 
 またはアクセスオブジェクトのメソッドを利用して下記のようにも書けます。
 
 ```Lua
-res,mes = avm:bload("bar.bin", 0x2000)
+res,mes = avm:bload("/foo/bar.bin", 0x2000)
 ```
 
 - 引数
 
 `avm` : 使用するアクセスオブジェクトを指定します。
 
-`file` : ロードするファイルを指定します。
+`file` : ロードするファイルをフルパスで指定します。
 
 `offset` : オフセットアドレスを *number* で指定します。省略時は `0`
 
@@ -321,20 +321,20 @@ ca.binsave(*`avm`*, *`file`*, *`size`*, *`offset`*)
 - 書式例
 ```Lua
 avm = ca.open()
-res,mes = ca.binsave(avm, "bar.bin", 8192, 0x1000)
+res,mes = ca.binsave(avm, "/foo/bar.bin", 8192, 0x1000)
 ```
 
 またはアクセスオブジェクトのメソッドを利用して下記のようにも書けます。
 
 ```Lua
-res,mes = avm:bsave("bar.bin", 8192, 0x1000)
+res,mes = avm:bsave("/foo/bar.bin", 8192, 0x1000)
 ```
 
 - 引数
 
 `avm` : 使用するアクセスオブジェクトを指定します。
 
-`file` : セーブするファイルを指定します。同名ファイルがあった場合は上書きされます。
+`file` : セーブするファイルをフルパスで指定します。同名ファイルがあった場合は上書きされます。
 
 `size` : 保存するバイトサイズを *number* で指定します。
 
@@ -355,20 +355,20 @@ ca.hexload(*`avm`*, *`file`*, *`offset`*)
 - 書式例
 ```Lua
 avm = ca.open()
-res,mes = ca.hexload(avm, "foo.hex")
+res,mes = ca.hexload(avm, "/foo/bar.hex")
 ```
 
 またはアクセスオブジェクトのメソッドを利用して下記のようにも書けます。
 
 ```Lua
-res,mes = avm:load("foo.hex")
+res,mes = avm:load("/foo/bar.hex")
 ```
 
 - 引数
 
 `avm` : 使用するアクセスオブジェクトを指定します。
 
-`file` : ロードするIntelHEXまたはS-recordファイルを指定します。フォーマットは自動認識されます。
+`file` : ロードするIntelHEXまたはS-recordファイルをフルパスで指定します。フォーマットは自動認識されます。
 
 `offset` : オフセットアドレスを *number* で指定します。省略時は `0`
 

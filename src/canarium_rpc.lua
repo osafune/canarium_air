@@ -6,7 +6,7 @@
   @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED
 
   *Version release
-    v0.1.1120   s.osafune@j7system.jp
+    v0.1.1121   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
     W4.00.01
@@ -38,7 +38,7 @@
 ------------------------------------------------------------------------------------
 --]]
 
--- 外部メソッドショートカット
+-- 外部モジュール
 local band = require "bit32".band
 local bor = require "bit32".bor
 local bxor = require "bit32".bxor
@@ -48,10 +48,17 @@ local btest = require "bit32".btest
 local schar = require "string".char
 local sform = require "string".format
 
+-- バージョン
+local rpc_version = "0.1.1121"
+
 
 ------------------------------------------------------------------------------------
 -- テスト用ファンクション
 ------------------------------------------------------------------------------------
+
+-- デバッグ表示メソッド
+_dbg_print = function(...) end
+
 
 -- クエリを生成
 function makequery(t)
@@ -113,10 +120,10 @@ function makequery(t)
   if #pstr > 70 then return nil,"payload data too long" end
   
   local res = schar(extract(t.id, 8, 8), extract(t.id, 0, 8), #pstr, checkcode(pstr)) .. pstr
-  --
+  --[[
   local s = "packet :"
-  for _,b in ipairs{res:byte(1, -1)} do s = s .. string.format(" %02x",b) end
-  print(s)
+  for _,b in ipairs{res:byte(1, -1)} do s = s .. sform(" %02x",b) end
+  _dbg_print(s)
   --]]
   return b64enc(res)
 end
@@ -225,7 +232,7 @@ local shdmem = function(dstr)
   fa.sharedmemory("write", 256, #dstr+1, dstr.."\x00")
   --[[
   local str = fa.sharedmemory("read", 256, 100)
-  print("json -> "..str)
+  _dbg_print("> shdmem : "..str)
   --]]
 end
 
@@ -247,14 +254,37 @@ function setprog(key, id, cmd)
   end
 end
 
+
 -- データのチェックコード生成
 function checkcode(d)
   local x = 0
   for _,b in ipairs{d:byte(1, -1)} do
     x = bxor(b, bor(lshift(x, 1), (btest(x, 0x80) and 1 or 0)))
   end
-
   return band(x, 0xff)
+end
+
+
+-- カレントファイルパス変換
+local cur_path = arg[0]:match(".+/")
+
+local getpath = function(fn)
+  if fn:sub(1, 1) ~= "/" then
+    if fn:sub(1, 2) == "./" then fn = fn:sub(3, -1) end
+    fn = cur_path .. fn
+  end
+  return fn
+end
+
+function setpath(path)
+  if path:sub(1, 1) ~= "/" then
+    if path:sub(1, 2) == "./" then path = path:sub(3, -1) end
+    path = cur_path .. path
+  end
+  if path:sub(-1, -1) ~= "/" then path = path .. "/" end
+  cur_path = path
+
+  return cur_path
 end
 
 
@@ -265,7 +295,7 @@ function do_config(cstr)
   end
 
   return ca.config{
-      file = cstr:sub(2, -1),
+      file = getpath(cstr:sub(2, -1)),
       cache = (cstr:byte(1, 1) == 0x80)
     }
 end
@@ -376,7 +406,7 @@ function do_bload(cstr)
   local avm,mes = ca.open{devid = cstr:byte(2, 2)}
   if avm then
     res,mes = avm:bload(
-      cstr:sub(7, -1),
+      getpath(cstr:sub(7, -1)),
       bor(lshift(cstr:byte(3, 3), 24), lshift(cstr:byte(4, 4), 16), lshift(cstr:byte(5, 5), 8), cstr:byte(6, 6))
     )
     avm:close()
@@ -396,7 +426,7 @@ function do_bsave(cstr)
   local avm,mes = ca.open{devid = cstr:byte(2, 2)}
   if avm then
     res,mes = avm:bsave(
-      cstr:sub(11, -1),
+      getpath(cstr:sub(11, -1)),
       bor(lshift(cstr:byte(7, 7), 24), lshift(cstr:byte(8, 8), 16), lshift(cstr:byte(9, 9), 8), cstr:byte(10, 10)),
       bor(lshift(cstr:byte(3, 3), 24), lshift(cstr:byte(4, 4), 16), lshift(cstr:byte(5, 5), 8), cstr:byte(6, 6))
     )
@@ -417,12 +447,103 @@ function do_load(cstr)
   local avm,mes = ca.open{devid = cstr:byte(2, 2)}
   if avm then
     res,mes = avm:load(
-      cstr:sub(7, -1),
+      getpath(cstr:sub(7, -1)),
       bor(lshift(cstr:byte(3, 3), 24), lshift(cstr:byte(4, 4), 16), lshift(cstr:byte(5, 5), 8), cstr:byte(6, 6))
     )
     avm:close()
   end
 
   return res,mes
+end
+
+
+------------------------------------------------------------------------------------
+-- Canarium RPC command parser
+------------------------------------------------------------------------------------
+
+function parse_command(query)
+  if not query then
+    return {rpc_version=rpc_version, lib_version=ca.version(), copyright="(c)2017 J-7SYSTEM WORKS LIMITED"},nil
+  end
+
+  local rp = b64dec(query)
+  -- query decode error
+  if not rp then return nil,nil,"Parse error",-32700 end
+
+  -- query packet error
+  if #rp < 5 then return nil,nil,"Parse error",-32700 end
+
+  local id = bit32.bor(bit32.lshift(rp:byte(1, 1), 8), rp:byte(2, 2))
+  local dlen = rp:byte(3, 3)
+  local ckey = rp:byte(4, 4)
+
+  -- query data error
+  if not(#rp == dlen+4 and ckey == checkcode(rp:sub(5, -1))) then
+    return nil,id,"Parse error",-32700
+  end
+
+  --[[
+  local s = "> decode :"
+  for _,b in ipairs{rp:byte(1, -1)} do s = s..string.format(" %02x",b) end
+  _dbg_print(s)
+  --]]
+
+  -- メソッド実行 
+  local key = math.random(65535)
+  local cmd = rp:byte(5, 5)
+  local cstr = rp:sub(5, -1)
+  local ecode = -32000
+  local res,mes
+
+  setprog(key, id, cmd)
+
+  if cmd == 0x10 then
+    _dbg_print("> iowr")
+    res,mes = do_iowr(cstr)
+  elseif cmd == 0x11 then
+    _dbg_print("> iord")
+    res,mes = do_iord(cstr)
+  elseif cmd == 0x18 then
+    _dbg_print("> memwr")
+    res,mes = do_memwr(cstr)
+  elseif cmd == 0x19 then
+    _dbg_print("> memrd")
+    res,mes = do_memrd(cstr)
+    if res then
+      --[[
+      local s = "> data :"
+      for _,b in ipairs{res:byte(1, -1)} do s = s..sform(" %02x", b) end
+      _dbg_print(s.." ("..#res.."bytes)")
+      --]]
+      res = b64enc(res)
+    end
+
+  elseif cmd == 0x20 then
+    _dbg_print("> binload")
+    res,mes = do_bload(cstr)
+  elseif cmd == 0x21 then
+    _dbg_print("> binsave")
+     res,mes = do_bsave(cstr)
+  elseif cmd == 0x22 then
+    _dbg_print("> hexload")
+    res,mes = do_load(cstr)
+
+  elseif cmd == 0x80 or cmd == 0x81 then
+    _dbg_print("> config")
+    res,mes = do_config(cstr)
+  elseif cmd == 0x8f then
+    _dbg_print("> confcheck")
+    res = ca.config() and 1 or 0
+    
+  else
+    mes = "Method not found"
+    ecode = -32601
+  end
+
+  setprog()
+
+  if not res then return res,id,mes,ecode end
+
+  return res,id
 end
 
