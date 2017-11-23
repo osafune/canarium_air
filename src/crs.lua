@@ -6,7 +6,7 @@
 @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED
 
   *Version release
-    v0.1.1122   s.osafune@j7system.jp
+    v0.1.1123   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
     W4.00.01
@@ -31,7 +31,8 @@ do
   -- BLOAD : EjQUYyBVMAAAAHBhY3JvbV9vcmcuaGV4
   -- BSAVE : EjQgWSFVMAAAAAABOAAvbHVhL2JpbnNhdmVfaW1hZ2UuYmlu
 
-  print("HTTP/1.1 200 OK\nConnection: close\nContent-Type: application/json; charset=utf-8")
+  print("HTTP/1.1 200 OK\nAccess-Control-Allow-Origin: *\nContent-Type: application/json; charset=utf-8")
+
   local json_str = cr.parse(arg[1])
 
   print("Content-Length: "..#json_str.."\n\n"..json_str)
