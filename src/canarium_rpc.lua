@@ -6,7 +6,7 @@
   @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED
 
   *Version release
-    v0.1.1123   s.osafune@j7system.jp
+    v0.1.1124   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
     W4.00.01
@@ -55,7 +55,7 @@ local jsonenc = require "cjson".encode
 cr = {}
 
 -- バージョン
-function cr.version() return "0.1.1123" end
+function cr.version() return "0.1.1124" end
 
 -- デバッグ表示メソッド（必要があれば外部で定義する）
 function cr.dbgprint(...) end
@@ -116,7 +116,7 @@ function cr.b64dec(s)
   local data = ""
   local n = 1
   local e = true
-  
+
   s = s:gsub("%s+", "")
   local m = #s % 4
   if m == 2 then
@@ -156,7 +156,7 @@ end
 
 
 ------------------------------------------------------------------------------------
--- Canarium RPC local function 
+-- Canarium RPC local function
 ------------------------------------------------------------------------------------
 
 -- 共有メモリ書き込み
@@ -486,10 +486,10 @@ function cr.makequery(t)
     for i=24,0,-8 do s = s .. schar(extract(addr, i, 8)) end
     return s
   end
-  
+
   local pstr = ""
   local dev = t.devid or 0x55
-  
+
   if t.cmd == "CONF" then
     pstr = schar(0x80) .. t.file
 
@@ -506,38 +506,38 @@ function cr.makequery(t)
     else
       return nil,"invalid parameter"
     end
-  
-  elseif t.cmd == "IORD" then         
+
+  elseif t.cmd == "IORD" then
     pstr = _setavm(0x11, dev, t.addr)
-  
+
   elseif t.cmd == "MEMWR" then
     if type(t.data) == "string" then
       pstr = _setavm(0x18, dev, t.addr) .. t.data
     else
       return nil,"invalid parameter"
     end
-  
+
   elseif t.cmd == "MEMRD" then
     pstr = _setavm(0x19, dev, t.addr) ..
       schar(extract(t.size, 8, 8), extract(t.size, 0, 8))
-  
+
   elseif t.cmd == "BLOAD" then
     pstr = _setavm(0x20, dev, t.addr) .. t.file
-  
+
   elseif t.cmd == "BSAVE" then
-    pstr = _setavm(0x21, dev, t.addr) .. 
+    pstr = _setavm(0x21, dev, t.addr) ..
       schar(extract(t.size, 24, 8), extract(t.size, 16, 8), extract(t.size, 8, 8), extract(t.size, 0, 8)) ..
       t.file
-  
+
   elseif t.cmd == "LOAD" then
     pstr = _setavm(0x22, dev, t.addr) .. t.file
-  
+
   else
     return nil,"invalid command"
   end
-  
+
   if #pstr > 70 then return nil,"payload data too long" end
-  
+
   local res = schar(extract(t.id, 8, 8), extract(t.id, 0, 8), #pstr, _checkcode(pstr)) .. pstr
   --[[
   local s = "packet :"

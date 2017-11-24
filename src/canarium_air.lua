@@ -177,9 +177,9 @@ local _avm_memrd = function(self, addr, size)
   local res,mes = _devopen(self, addr)
   if not res then return nil,mes end
   i2c(t_stop)
-  
+
   local rstr = ""
-  
+
   while size > 0 do
     if i2c{mode="start", address=self.devid, direction="read"} ~= _r_OK then
       i2c(t_stop)
@@ -294,7 +294,7 @@ function ca.open(t)
 
   local _,d = pio(0x00, 0x00)
   if not btest(d, 0x10) then return nil,"device is not configured" end
-  
+
   -- ローカルパラメータ設定
   local dev = 0x55
   local freq = 400
@@ -334,7 +334,7 @@ function ca.open(t)
 
   if _devindex[dev] then return nil,"device is used by other" end
   _devindex[dev] = true
-  
+
   return {
       devid = dev,
       i2cfreq = freq,
@@ -478,7 +478,7 @@ function ca.config(t)
   -- コンフィグメイン処理
   ca.progress("config", 0, 0)
   ca.avminit()
-  
+
   if lfs.attributes(fname, "modification") ~= lfs.attributes(fname..".cache", "modification") then
     usecache = false
   end
@@ -531,7 +531,7 @@ function ca.binload(avm, fname, offset)
   local fs = fbin:seek("end")
   fbin:seek("set")
 
-  local sz = 100 / ((fs < 1) and 1 or fs) 
+  local sz = 100 / ((fs < 1) and 1 or fs)
   local res = true
   local mes
 
@@ -604,7 +604,7 @@ function ca.hexload(avm, fname, offset)
   if type(offset) ~= "number" then offset = 0 end
 
   ca.progress("hexload", 0)
-  
+
   -- インテルHEXの一行をデコード
   local ext_addr = 0
   local _dec_ihex = function(ln)
@@ -622,7 +622,7 @@ function ca.hexload(avm, fname, offset)
 
     local sum = count + extract(addr, 8, 8) + extract(addr, 0, 8) + rtype
     local data = ""
-    
+
     if rtype == 2 or rtype == 4 then
       local ea = tonumber(ln:sub(10, 13), 16)
       if not ea then return false,"invalid charactors" end
@@ -675,7 +675,7 @@ function ca.hexload(avm, fname, offset)
     local addr = 0
     local sum = count
     local data = ""
- 
+
     if rtype == 1 then
       addr = tonumber(ln:sub(5, 8), 16)   -- S1レコード
       n = 9
