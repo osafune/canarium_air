@@ -2,7 +2,7 @@ Canarium Air
 ============
 
 Canarium Airパッケージは、FlashAir W-04を利用してIntel FPGAにWebインターフェースを提供します。
-![about](https://raw.githubusercontent.com/osafune/canarium_air/master/img/canarium_summary.png = 500x)  
+<img src"https://raw.githubusercontent.com/osafune/canarium_air/master/img/canarium_summary.png" width="500" height="224">
 
 このパッケージライブラリで提供する機能は‥‥
 1. FPGAのコンフィグレーション機能  
@@ -20,7 +20,7 @@ Luaスクリプトを使って自動的なセットアップやバッチ処理�
 また、全てのコンテンツファイルをFlashAirに格納して運用することができるので、外部に接続のないネットワーク上でもWebのリッチUI・リッチライブラリを使うことができます。  
 
 FlashAirそのものの機能でもあるIoT Hubも同時に使うことができるので、大量のセンサーからの情報をFPGAで処理してWebサービスへ連携する、FPGAエッジコンピューティングを実現します。  
-![exsample](https://raw.githubusercontent.com/osafune/canarium_air/master/img/canarium_ifttt.png = 500x)
+<img src="https://raw.githubusercontent.com/osafune/canarium_air/master/img/canarium_ifttt.png" width="500" height="246">
 
 現状はお試しバージョンです。
 
