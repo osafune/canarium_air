@@ -144,7 +144,7 @@ JSONレスポンス
 
 - 正常レスポンス
 
-```json
+```
 {
   "jsonrpc" : "2.0",
   "result" : <boolean> or <number> or <string> or <object>,
@@ -154,7 +154,7 @@ JSONレスポンス
 
 - エラーレスポンス
 
-```json
+```
 {
   "jsonrpc" : "2.0",
   "error" : {
@@ -471,7 +471,7 @@ Qsysモジュール（FPGA内部ロジックコア）のメモリアドレス空
 - レスポンス  
 JSON形式で下記のようにデータが返ります。
 
-```json
+```
 {
   "key" : <number>,
   "id" : <number>,
@@ -498,4 +498,5 @@ JSON形式で下記のようにデータが返ります。
 進捗ステータス取得はFlashAirの `command.cgi` を利用しているため、クロスオリジンHTTPリクエストではエラーが返ります。
 
 ---
-&copy;2017 J-7SYSTEM WORKS LIMITED
+
+&copy; 2017 J-7SYSTEM WORKS LIMITED
