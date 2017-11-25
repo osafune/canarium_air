@@ -3,7 +3,7 @@ Canarium Air
 
 Canarium Airパッケージは、FlashAir W-04を利用してIntel FPGAにWebインターフェースを提供します。  
 
-<img src="https://raw.githubusercontent.com/osafune/canarium_air/master/img/canarium_summary.png" width="600" height="268">
+<img src="https://raw.githubusercontent.com/osafune/canarium_air/master/img/canarium_summary.png" width="750" height="336">
 
 このパッケージライブラリで提供する機能は‥‥
 1. FPGAのコンフィグレーション機能  
@@ -17,17 +17,21 @@ Luaスクリプトを使って自動的なセットアップやバッチ処理�
 3. リモートプロシジャコール(RPC)機能  
 クライアント側からはJSON-RPC形式のアクセスを提供します。
 
+全てのコンテンツファイルをFlashAirに格納して運用することができるので、外部に接続のないネットワーク上でもWebのリッチUI・リッチライブラリを使うことができます。  
+インストールに特別なツールは使いません。全ファイルをFlashAirへコピーすればすぐに使うことができます。  
 
-また、全てのコンテンツファイルをFlashAirに格納して運用することができるので、外部に接続のないネットワーク上でもWebのリッチUI・リッチライブラリを使うことができます。  
 
-FlashAirそのものの機能でもあるIoT Hubも同時に使うことができるので、大量のセンサーからの情報をFPGAで処理してWebサービスへ連携する、FPGAエッジコンピューティングを実現します。  
+また、Canarium AirパッケージとFlashAirのIoT Hubを組み合わせれば、例えば大量のセンサーからの情報をFPGAで処理してWebサービスへと連携するような、FPGAエッジコンピューティングをとてもコンパクトに実現できます。  
 
-<img src="https://raw.githubusercontent.com/osafune/canarium_air/master/img/canarium_ifttt.png" width="600" height="296">
+<img src="https://raw.githubusercontent.com/osafune/canarium_air/master/img/canarium_ifttt.png" width="750" height="370">
 
-現状はお試しバージョンです。
+※ Canarium Air は [PERIDOT Project](https://github.com/osafune/peridot_newgen) の一環として製作しています。
+
 
 対象環境
 =======
+
+※ 現状はお試しバージョンです。
 
 - FlashAir W-04 ファームW4.00.01
 - Intel FPGA (CycloneIV E, Cyclone10 LP, MAX10)
@@ -56,7 +60,7 @@ Canarium RPC Server
 Canarium Air I/O
 ----------------
 
-- [Canarium Air I/O v0.1.1120](canarium_rpc_doc.md)
+- [Canarium Air I/O v0.1.1120](canarium_air_doc.md)
 
 
 ライセンス
