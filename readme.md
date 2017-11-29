@@ -6,22 +6,22 @@ Canarium Airパッケージは、FlashAir W-04を利用してIntel FPGAにWebイ
 <img src="https://raw.githubusercontent.com/osafune/canarium_air/master/img/canarium_summary.png" width="750" height="336">
 
 このパッケージライブラリで提供する機能は‥‥
-1. FPGAのコンフィグレーション機能  
+1. **FPGAのコンフィグレーション機能**  
 オンボードのコンフィグレーションROMは不要、書き換えの手間を省きます。  
 クライアント側からの手動コンフィグレーションや、サーバーアクセスによる自律的なアップデートなどが簡単に実現できます。  
 
-2. FPGA内部のデータアクセス機能  
+2. **FPGA内部のデータアクセス機能**  
 Qsysモジュール内部へのI/Oアクセス、メモリアクセスの他、メモリイメージのロード・セーブの機能を提供します。  
 Luaスクリプトを使って自動的なセットアップやバッチ処理、他のWebサービスへの連携などが実現できます。
 
-3. リモートプロシジャコール(RPC)機能  
+3. **リモートプロシジャコール(RPC)機能**  
 クライアント側からはJSON-RPC形式のアクセスを提供します。
 
 全てのコンテンツファイルをFlashAirに格納して運用することができるので、外部に接続のないネットワーク上でもWebのリッチUI・リッチライブラリを使うことができます。  
 インストールに特別なツールは使いません。全ファイルをFlashAirへコピーすればすぐに使うことができます。  
 
 
-また、Canarium AirパッケージとFlashAirのIoT Hubを組み合わせれば、例えば大量のセンサーからの情報をFPGAで処理してWebサービスへと連携するような、FPGAエッジコンピューティングをとてもコンパクトに実現できます。  
+また、Canarium Airパッケージと[IFTTT Webhooks](https://ifttt.com/maker_webhooks)を組み合わせれば、例えば大量のセンサーからの情報をFPGAで処理してWebサービスへと連携するような、FPGAエッジコンピューティングをとてもコンパクトに実現できます。  
 
 <img src="https://raw.githubusercontent.com/osafune/canarium_air/master/img/canarium_ifttt.png" width="750" height="370">
 
@@ -67,4 +67,4 @@ Canarium Air I/O
 =========
 
 [The MIT License (MIT)](https://opensource.org/licenses/MIT)  
-Copyright (c) 2017 J-7SYSTEM WORKS LIMITED
+Copyright (c) 2017 J-7SYSTEM WORKS LIMITED.

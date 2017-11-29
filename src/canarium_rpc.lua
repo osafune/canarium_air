@@ -3,10 +3,10 @@
 --  Canarium Air RPC Server module                                                --
 ------------------------------------------------------------------------------------
   @author Shun OSAFUNE <s.osafune@j7system.jp>
-  @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED
+  @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.1.1124   s.osafune@j7system.jp
+    v0.1.1129   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
     W4.00.01
@@ -16,7 +16,7 @@
 
 ------------------------------------------------------------------------------------
 -- The MIT License (MIT)
--- Copyright (c) 2017 J-7SYSTEM WORKS LIMITED
+-- Copyright (c) 2017 J-7SYSTEM WORKS LIMITED.
 --
 -- Permission is hereby granted, free of charge, to any person obtaining a copy of
 -- this software and associated documentation files (the "Software"), to deal in
@@ -55,7 +55,7 @@ local jsonenc = require "cjson".encode
 cr = {}
 
 -- バージョン
-function cr.version() return "0.1.1124" end
+function cr.version() return "0.1.1129" end
 
 -- デバッグ表示メソッド（必要があれば外部で定義する）
 function cr.dbgprint(...) end
@@ -159,32 +159,26 @@ end
 -- Canarium RPC local function
 ------------------------------------------------------------------------------------
 
--- 共有メモリ書き込み
-local _update = function(dstr)
-  shdmem("write", 512, #dstr+1, dstr.."\x00")
-  --[[
-  local str = shdmem("read", 512, 100)
-  cr.dbgprint("> shdmem : "..str)
-  --]]
-end
-
 -- 進捗表示処理（ファンクションの待避とヘッダ部の設定）
 local prog_func,prog_txt = nil,""
+local smem_begin = 512
 
 local _setprog = function(key, id, cmd)
   if not key then
     if prog_func then
       ca.progress = prog_func
       prog_func = nil
-      _update("")
+      shdmem("write", smem_begin, 1, "\x00")
     end
   else
     if not prog_func then
-      prog_txt = sform('{"key":%5d,"id":%5d,"command":%3d,"progress":[', key, id, cmd)
+      prog_txt = sform('{"key":%d,"id":%d,"cmd":%d,"progress":[', key, id, cmd)
       prog_func = ca.progress
     end
   end
 end
+
+local _update = function(f, ...) cr.update(...) end
 
 -- カレントファイルパス変換
 local cur_path = arg[0]:match(".+/")
@@ -216,26 +210,46 @@ local _checkcode = function (d)
   return band(x, 0xff)
 end
 
+-- VERメソッド実行
+local _do_version = function()
+  return {
+    rpc_version = cr.version(),
+    lib_version = ca.version(),
+    copyright = "(c)2017 J-7SYSTEM WORKS LIMITED."
+  }, nil
+end
 
--- CONFコマンド、FCONFコマンド実行
+-- CHECKメソッド実行
+local _do_check = function(cstr)
+  cr.dbgprint("> check")
+
+  return (ca.config() and 1 or 0)
+end
+
+-- CONFメソッド実行
 local _do_config = function(cstr)
-  ca.progress = function(f, p1, p2)
-    _update(prog_txt..sform("%3d,%3d]}", p1, p2))
-  end
+  cr.dbgprint("> config")
 
-  return ca.config{
-      file = _getpath(cstr:sub(2, -1)),
-      cache = (cstr:byte(1, 1) == 0x80)
-    }
+  ca.progress = _update
+
+  return ca.config{file = _getpath(cstr:sub(2, -1))}
+end
+
+-- FCONFメソッド実行
+local _do_fconfig = function(cstr)
+  cr.dbgprint("> fconfig")
+
+  ca.progress = _update
+
+  return ca.config{file = _getpath(cstr:sub(2, -1)), cache = false}
 end
 
 
--- IOWRコマンド実行
+-- IOWRメソッド実行
 local _do_iowr = function(cstr)
-  ca.progress = function(f, p1)
-    _update(prog_txt..sform("%3d]}", p1))
-  end
+  cr.dbgprint("> iowr")
 
+  ca.progress = _update
   ca.progress("", 0)
 
   local res = nil
@@ -250,12 +264,11 @@ local _do_iowr = function(cstr)
   return res,mes
 end
 
--- IORDコマンド実行
+-- IORDメソッド実行
 local _do_iord = function(cstr)
-  ca.progress = function(f, p1)
-    _update(prog_txt..sform("%3d]}", p1))
-  end
+  cr.dbgprint("> iord")
 
+  ca.progress = _update
   ca.progress("", 0)
 
   local res = nil
@@ -265,17 +278,19 @@ local _do_iord = function(cstr)
     avm:close()
   end
 
-  if res then ca.progress("", 100) end
+  if res then
+    ca.progress("", 100)
+    cr.dbgprint(sform(">  data : 0x%08x", res))
+  end
 
   return res,mes
 end
 
--- MEMWRコマンド実行
+-- MEMWRメソッド実行
 local _do_memwr = function(cstr)
-  ca.progress = function(f, p1)
-    _update(prog_txt..sform("%3d]}", p1))
-  end
+  cr.dbgprint("> memwr")
 
+  ca.progress = _update
   ca.progress("", 0)
 
   local res = nil
@@ -290,12 +305,11 @@ local _do_memwr = function(cstr)
   return res,mes
 end
 
--- MEMRDコマンド実行
+-- MEMRDメソッド実行
 local _do_memrd = function(cstr)
-  ca.progress = function(f, p1)
-    _update(prog_txt..sform("%3d]}", p1))
-  end
+  cr.dbgprint("> memrd")
 
+  ca.progress = _update
   ca.progress("", 0)
 
   local res = nil
@@ -305,17 +319,25 @@ local _do_memrd = function(cstr)
     avm:close()
   end
 
-  if res then ca.progress("", 100) end
+  if res then
+    ca.progress("", 100)
+    --
+    local s = ">  data :"
+    for _,b in ipairs{res:byte(1, -1)} do s = s .. sform(" %02x", b) end
+    cr.dbgprint(s.." ("..#res.."bytes)")
+    --]]
+    res = cr.b64enc(res)
+  end
 
   return res,mes
 end
 
 
--- BLOADコマンド実行
+-- BLOADメソッド実行
 local _do_bload = function(cstr)
-  ca.progress = function(f, p1)
-    _update(prog_txt..sform("%3d]}", p1))
-  end
+  cr.dbgprint("> bload")
+
+  ca.progress = _update
 
   local res = nil
   local avm,mes = ca.open{devid = cstr:byte(2, 2)}
@@ -327,11 +349,11 @@ local _do_bload = function(cstr)
   return res,mes
 end
 
--- BSAVEコマンド実行
+-- BSAVEメソッド実行
 local _do_bsave = function(cstr)
-  ca.progress = function(f, p1)
-    _update(prog_txt..sform("%3d]}", p1))
-  end
+  cr.dbgprint("> bsave")
+
+  ca.progress = _update
 
   local res = nil
   local avm,mes = ca.open{devid = cstr:byte(2, 2)}
@@ -343,11 +365,11 @@ local _do_bsave = function(cstr)
   return res,mes
 end
 
--- LOADコマンド実行
+-- LOADメソッド実行
 local _do_load = function(cstr)
-  ca.progress = function(f, p1)
-    _update(prog_txt..sform("%3d]}", p1))
-  end
+  cr.dbgprint("> load")
+
+  ca.progress = _update
 
   local res = nil
   local avm,mes = ca.open{devid = cstr:byte(2, 2)}
@@ -364,6 +386,62 @@ end
 -- Canarium RPC command parser
 ------------------------------------------------------------------------------------
 
+-- メソッドテーブルの設定
+local method = {
+    [0x01] = {func = _do_check, name = "CHECK"},
+    [0x08] = {func = _do_config, name = "CONF"},
+    [0x09] = {func = _do_fconfig, name = "FCONF"},
+    [0x10] = {func = _do_iowr, name = "IOWR"},
+    [0x11] = {func = _do_iord, name = "IORD"},
+    [0x18] = {func = _do_memwr, name = "MEMWR"},
+    [0x19] = {func = _do_memrd, name = "MEMRD"},
+    [0x20] = {func = _do_bload, name = "BLOAD"},
+    [0x21] = {func = _do_bsave, name = "BSAVE"},
+    [0x22] = {func = _do_load, name = "LOAD"}
+}
+local _no_method = function() return nil,"Method not found",-32601 end
+setmetatable(method, {__index = function() return {func = _no_method, name = ""} end})
+
+-- ユーザーメソッドの設定・削除
+function cr.setmethod(name, cmd, func)
+  local res = false
+  local key
+  for k,v in pairs(method) do
+    if name == v.name then key = k end
+  end
+
+  if type(cmd) == "number" and (cmd >= 0x00 and cmd <= 0x7f) and type(func) == "function" then
+    if key then method[key] = nil end
+    method[cmd] = {func = func, name = name}
+    res = true
+  elseif type(cmd) == "nil" and key then
+    method[key] = nil
+    res = true
+  end
+
+  return res
+end
+
+-- 進捗表示のアップデート
+function cr.update(...)
+  local s = ""
+  for i,v in ipairs({...}) do
+    if i == 1 then
+      s = s .. sform("%d", v)
+    else
+      s = s .. sform(",%d", v)
+    end
+  end
+  s = prog_txt .. s .. "]}\x00"
+
+  shdmem("write", smem_begin, #s, s)
+  --[[
+  local str = shdmem("read", smem_begin, 100)
+  cr.dbgprint("> shdmem : "..str)
+  --]]
+end
+
+
 -- カレントパスの設定
 function cr.setpath(path)
   if type(path) == "string" then
@@ -378,12 +456,11 @@ function cr.setpath(path)
   return cur_path
 end
 
--- コマンドパース
+
+-- メソッドのパース
 function cr.parse(query)
-  local _do_command = function(q)
-    if not q or #q <= 1 then
-      return {rpc_version=cr.version(), lib_version=ca.version(), copyright="(c)2017 J-7SYSTEM WORKS LIMITED"},nil
-    end
+  local _do_method = function(q)
+    if not q or #q <= 1 then return _do_version() end
 
     local rp = cr.b64dec(q)
 
@@ -409,54 +486,11 @@ function cr.parse(query)
     local key = rand(65535)
     local cmd = rp:byte(5, 5)
     local cstr = rp:sub(5, -1)
-    local ecode = -32000
-    local res,mes
 
     _setprog(key, id, cmd)
 
-    if cmd == 0x10 then
-      cr.dbgprint("> iowr")
-      res,mes = _do_iowr(cstr)
-    elseif cmd == 0x11 then
-      cr.dbgprint("> iord")
-      res,mes = _do_iord(cstr)
-      if res then cr.dbgprint(sform(">  data : 0x%08x", res)) end
-    elseif cmd == 0x18 then
-      cr.dbgprint("> memwr")
-      res,mes = _do_memwr(cstr)
-    elseif cmd == 0x19 then
-      cr.dbgprint("> memrd")
-      res,mes = _do_memrd(cstr)
-      if res then
-        --
-        local s = ">  data :"
-        for _,b in ipairs{res:byte(1, -1)} do s = s .. sform(" %02x", b) end
-        cr.dbgprint(s.." ("..#res.."bytes)")
-        --]]
-        res = cr.b64enc(res)
-      end
-
-    elseif cmd == 0x20 then
-      cr.dbgprint("> binload")
-      res,mes = _do_bload(cstr)
-    elseif cmd == 0x21 then
-      cr.dbgprint("> binsave")
-       res,mes = _do_bsave(cstr)
-    elseif cmd == 0x22 then
-      cr.dbgprint("> hexload")
-      res,mes = _do_load(cstr)
-
-    elseif cmd == 0x80 or cmd == 0x81 then
-      cr.dbgprint("> config")
-      res,mes = _do_config(cstr)
-    elseif cmd == 0x8f then
-      cr.dbgprint("> confcheck")
-      res = ca.config() and 1 or 0
-
-    else
-      mes = "Method not found"
-      ecode = -32601
-    end
+    local res,mes,ecode = method[cmd].func(cstr)
+    ecode = ecnode or -32000
 
     _setprog()
 
@@ -464,9 +498,8 @@ function cr.parse(query)
     return res,id
   end
 
-
   -- クエリのパースと実行
-  local res,id,mes,ecode = _do_command(query)
+  local res,id,mes,ecode = _do_method(query)
 
   local t = {jsonrpc="2.0", id=id}
   if res then t.result = res else t.error = {code=ecode, message=mes} end
@@ -490,50 +523,59 @@ function cr.makequery(t)
   local pstr = ""
   local dev = t.devid or 0x55
 
-  if t.cmd == "CONF" then
-    pstr = schar(0x80) .. t.file
+  local cmd,name
+  for k,v in pairs(method) do
+    if v.name == t.cmd then
+      name = v.name
+      cmd = k
+    end
+  end
+  if not name then return nil,"invalid command" end
 
-  elseif t.cmd == "FCONF" then
-    pstr = schar(0x81) .. t.file
+  if name == "CHECK" or name == "VER" then
+    pstr = schar(cmd)
 
-  elseif t.cmd == "CHECK" then
-    pstr = schar(0x8f)
+  elseif name == "CONF" or name == "FCONF" then
+    pstr = schar(cmd) .. t.file
 
-  elseif t.cmd == "IOWR" then
+  elseif name == "IOWR" then
     if type(t.data) == "number" then
-      pstr = _setavm(0x10, dev, t.addr) ..
+      pstr = _setavm(cmd, dev, t.addr) ..
         schar(extract(t.data, 24, 8), extract(t.data, 16, 8), extract(t.data, 8, 8), extract(t.data, 0, 8))
     else
       return nil,"invalid parameter"
     end
 
-  elseif t.cmd == "IORD" then
-    pstr = _setavm(0x11, dev, t.addr)
+  elseif name == "IORD" then
+    pstr = _setavm(cmd, dev, t.addr)
 
-  elseif t.cmd == "MEMWR" then
+  elseif name == "MEMWR" then
     if type(t.data) == "string" then
-      pstr = _setavm(0x18, dev, t.addr) .. t.data
+      pstr = _setavm(cmd, dev, t.addr) .. t.data
     else
       return nil,"invalid parameter"
     end
 
-  elseif t.cmd == "MEMRD" then
-    pstr = _setavm(0x19, dev, t.addr) ..
+  elseif name == "MEMRD" then
+    pstr = _setavm(cmd, dev, t.addr) ..
       schar(extract(t.size, 8, 8), extract(t.size, 0, 8))
 
-  elseif t.cmd == "BLOAD" then
-    pstr = _setavm(0x20, dev, t.addr) .. t.file
+  elseif name == "BLOAD" then
+    pstr = _setavm(cmd, dev, t.addr) .. t.file
 
-  elseif t.cmd == "BSAVE" then
-    pstr = _setavm(0x21, dev, t.addr) ..
+  elseif name == "BSAVE" then
+    pstr = _setavm(cmd, dev, t.addr) ..
       schar(extract(t.size, 24, 8), extract(t.size, 16, 8), extract(t.size, 8, 8), extract(t.size, 0, 8)) ..
       t.file
 
-  elseif t.cmd == "LOAD" then
-    pstr = _setavm(0x22, dev, t.addr) .. t.file
+  elseif name == "LOAD" then
+    local addr = (type(t.addr) == "number") and t.addr or 0
+    pstr = _setavm(cmd, dev, addr) .. t.file
 
   else
-    return nil,"invalid command"
+    local param = (type(t.param) == "string") and t.param or ""
+    pstr = schar(cmd) .. param
+
   end
 
   if #pstr > 70 then return nil,"payload data too long" end

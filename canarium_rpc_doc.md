@@ -8,7 +8,7 @@ Canarium RPCはFlashAirを使ってFPGAリソースへのアクセスを提供�
 ==========
 
 [The MIT License (MIT)](https://opensource.org/licenses/MIT)  
-Copyright (c) 2017 J-7SYSTEM WORKS LIMITED
+Copyright (c) 2017 J-7SYSTEM WORKS LIMITED.
 
 
 対象環境
@@ -84,9 +84,9 @@ HTTPレスポンス
 
 ```
 *変換の例
-  packet : 30 39 13 b4 80 68 6f 73 74 74 65 73 74 5f 6f 6c 69 76 65 2e 72 62 66
+  packet : 30 39 13 96 08 68 6f 73 74 74 65 73 74 5f 6f 6c 69 76 65 2e 72 62 66
     ↓
-  query : MDkTtIBob3N0dGVzdF9vbGl2ZS5yYmY
+  query : MDkTlghob3N0dGVzdF9vbGl2ZS5yYmY
 ````
 
 パケットフレーム
@@ -201,7 +201,7 @@ VERクエリ
 ライブラリのバージョンを取得します。
 
 このクエリのみ文字列なしで `crs.lua` を呼び出します。  
-レスポンスには `id ` キーはありません。
+レスポンスには `id` キーはありません。
 
 - 返値
   - `result`  
@@ -219,7 +219,7 @@ FPGAがコンフィグレーション済みかどうかをチェックします�
 - ペイロードデータ  
 
 ```
-[0x8f]
+[0x01]
 ```
 
 - 返値
@@ -239,7 +239,7 @@ FPGAのコンフィグレーションを行います。
 - ペイロードデータ  
 
 ```
-[0x80 <filename>]
+[0x08 <filename>]
 ```
 
 - パラメータ
@@ -265,7 +265,7 @@ FPGAのコンフィグレーションを行います。
 - ペイロードデータ  
 
 ```
-[0x81 <filename>]
+[0x09 <filename>]
 ```
 
 - パラメータ
@@ -475,7 +475,7 @@ JSON形式で下記のようにデータが返ります。
 {
   "key" : <number>,
   "id" : <number>,
-  "command" : <number>,
+  "cmd" : <number>,
   "progress": [<number>, <number>, ...]
 }
 ```
@@ -487,7 +487,7 @@ JSON形式で下記のようにデータが返ります。
   - `id`  
   クエリで指定したidキーの番号が入ります。
 
-  - `command`  
+  - `cmd`  
   クエリの識別番号（ペイロードの最初の１バイト）が入ります。
 
   - `progress`  

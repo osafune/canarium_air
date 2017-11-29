@@ -9,7 +9,7 @@ Canarium Air I/OはFlashAirからFPGAのコンフィグレーションおよび�
 =========
 
 [The MIT License (MIT)](https://opensource.org/licenses/MIT)  
-Copyright (c) 2017 J-7SYSTEM WORKS LIMITED
+Copyright (c) 2017 J-7SYSTEM WORKS LIMITED.
 
 
 対象環境

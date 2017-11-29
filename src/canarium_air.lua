@@ -4,7 +4,7 @@
 --    PERIDOT-AIR configuration & Avalon-MM access library                        --
 ------------------------------------------------------------------------------------
   @author Shun OSAFUNE <s.osafune@j7system.jp>
-  @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED
+  @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED.
 
   *Version release
     v0.1.1120   s.osafune@j7system.jp
@@ -22,7 +22,7 @@
 
 ------------------------------------------------------------------------------------
 -- The MIT License (MIT)
--- Copyright (c) 2017 J-7SYSTEM WORKS LIMITED
+-- Copyright (c) 2017 J-7SYSTEM WORKS LIMITED.
 --
 -- Permission is hereby granted, free of charge, to any person obtaining a copy of
 -- this software and associated documentation files (the "Software"), to deal in

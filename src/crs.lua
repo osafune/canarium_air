@@ -3,10 +3,10 @@
 --  Canarium RPC Server                                                           --
 ------------------------------------------------------------------------------------
 @author Shun OSAFUNE <s.osafune@j7system.jp>
-@copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED
+@copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.1.1124   s.osafune@j7system.jp
+    v0.1.1129   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
     W4.00.01
