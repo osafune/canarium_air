@@ -7,7 +7,7 @@
   @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.1.1120   s.osafune@j7system.jp
+    v0.1.1202   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
     W4.00.01
@@ -60,7 +60,7 @@ local lshift = require "bit32".lshift
 ca = {}
 
 -- バージョン
-function ca.version() return "0.1.1120" end
+function ca.version() return "0.1.1202" end
 
 -- 進捗表示（必要な場合は外部で定義する）
 function ca.progress(funcname, ...) end
@@ -354,7 +354,6 @@ end
 
 -- AvalonMMイニシャライズ
 function ca.avminit()
-  i2c{mode="deinit"}
   pio(0x00, 0x00)
   _devindex = {}
 end
@@ -709,7 +708,7 @@ function ca.hexload(avm, fname, offset)
 
     if btest(sum+b+1, 0xff) then return false,"checksum error" end
 
-    return avm:memwr(offset+addr, data)
+    return avm:memwr(offset + addr, data)
   end
 
   local fhex = open(fname, "r")
@@ -717,7 +716,7 @@ function ca.hexload(avm, fname, offset)
   local fs = fhex:seek("end")
   fhex:seek("set")
 
-  local sz = 100 / ((fs<1) and 1 or fs)
+  local sz = 100 / ((fs < 1) and 1 or fs)
   local res = true
   local mes
   local lnumber = 1
@@ -727,9 +726,9 @@ function ca.hexload(avm, fname, offset)
     if not ln then break end
 
     local c = ln:sub(1, 1)
-    if c==":" then
+    if c == ":" then
       res,mes = _dec_ihex(ln)
-    elseif c=="S" then
+    elseif c == "S" then
       res,mes = _dec_srec(ln)
     end
     if not res then break end

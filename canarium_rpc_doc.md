@@ -2,7 +2,7 @@ Canarium RPC
 ============
 
 Canarium RPCはFlashAirを使ってFPGAリソースへのアクセスを提供するリモートプロシージャコール(RPC)ライブラリです。  
-インターフェースはJSON-RPCをベースにFLashAirのHTTPサーバーの制約にあわせて変更しています。
+インターフェースはJSON-RPCをベースにFlashAirのHTTPサーバーの制約にあわせて変更しています。
 
 ライセンス
 ==========
@@ -15,7 +15,7 @@ Copyright (c) 2017 J-7SYSTEM WORKS LIMITED.
 ========
 
 - FlashAir W-04 ファームW4.00.01
-- Canarium Airライブラリ v0.1.1120以降
+- Canarium Air I/O v0.1.1120以降
 
 
 使い方
@@ -26,7 +26,7 @@ FlashAir準備
 
 1. FlashAirのGPIOモードを使用します。`/SD_WLAN/CONFIG` ファイルに `IFMODE=1` を追加します。  
 
-2. `canarium_rpc.lua` と `canarium_air.lua` をFlashAirの任意の同一フォルダに格納します。
+2. `canarium_rpc.lua` と `canarium_air.lua` をFlashAirの任意のフォルダに格納します。
 
 3. CanariumRPC over HTTPを使う場合は `crs.lua` をFlashAirのルートに格納します。
 
@@ -60,7 +60,7 @@ http://flashair/crs.lua?<クエリ>
 ```
 FPGAがコンフィグされてるかどうかのチェックをする
 
-> GET http://flashair/crs.lua?EjQBj48
+> GET http://flashair/crs.lua?MDkBAQE
 
 HTTPレスポンス
 
@@ -69,7 +69,7 @@ HTTPレスポンス
 > Content-Type: application/json; charset=utf-8
 > Content-Length: 38
 >
-> {"jsonrpc":"2.0","result":1,"id":4660}
+> {"jsonrpc":"2.0","result":1,"id":12345}
 >
 ```
 
@@ -119,7 +119,7 @@ for(xsum=0,i=0 ; i < n ; i++) {
 ---------------
 
 クエリで指定するファイルはFlashAir側のストレージに格納されているものに限ります。  
-必要なファイルは予めカードに保存しておくか、FlashAir用のツール（あるいはupload.cgi）でファイルを転送してください。  
+必要なファイルは予めカードに保存しておくか、FlashAir用のツール（あるいは `upload.cgi` ）でファイルを転送してください。  
 同様にクエリの結果として書き出されるファイルはFlashAirのストレージに保存されます。必要に応じてクライアント側にダウンロードしてください。
 
 ファイルパスは次のような書き方ができます。
@@ -182,7 +182,7 @@ JSONレスポンス
 
 - エラーコード  
   - パースエラー  
-  `error : {code":-32700, "message":"Parse error"}`  
+  `error : {"code":-32700, "message":"Parse error"}`  
   クエリをデコードできなかった、または不正なパケット形式を検出した場合に返されます。  
 
   - メソッド呼び出しエラー  

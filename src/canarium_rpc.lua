@@ -6,7 +6,7 @@
   @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.1.1129   s.osafune@j7system.jp
+    v0.1.1202   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
     W4.00.01
@@ -55,7 +55,7 @@ local jsonenc = require "cjson".encode
 cr = {}
 
 -- バージョン
-function cr.version() return "0.1.1129" end
+function cr.version() return "0.1.1202" end
 
 -- デバッグ表示メソッド（必要があれば外部で定義する）
 function cr.dbgprint(...) end
@@ -424,21 +424,23 @@ end
 
 -- 進捗表示のアップデート
 function cr.update(...)
-  local s = ""
-  for i,v in ipairs({...}) do
-    if i == 1 then
-      s = s .. sform("%d", v)
-    else
-      s = s .. sform(",%d", v)
+  if prog_func then
+    local s = ""
+    for i,v in ipairs({...}) do
+      if i == 1 then
+        s = s .. sform("%d", v)
+      else
+        s = s .. sform(",%d", v)
+      end
     end
-  end
-  s = prog_txt .. s .. "]}\x00"
+    s = prog_txt .. s .. "]}\x00"
 
-  shdmem("write", smem_begin, #s, s)
-  --[[
-  local str = shdmem("read", smem_begin, 100)
-  cr.dbgprint("> shdmem : "..str)
-  --]]
+    shdmem("write", smem_begin, #s, s)
+    --[[
+    local str = shdmem("read", smem_begin, 100)
+    cr.dbgprint("> shdmem : "..str)
+    --]]
+  end
 end
 
 
