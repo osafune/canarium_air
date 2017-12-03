@@ -13,7 +13,7 @@ var Canarium = function(option) {
     const cgi_getprogress = "/command.cgi?op=130&ADDR=512&LEN=100";
 
     // RPCサーバーのURLを保存する変数
-    let cors_url = "http://192.168.1.200";
+    let cors_host = "http://192.168.1.200";
     let rpc_server = "/lua/crs.lua";
 
 
@@ -294,7 +294,7 @@ var Canarium = function(option) {
 
         if (!t.method) return ERROR_JSON;
 
-        let params = t.params;
+        let params = Object.assign({}, t.params);
         params.devid = (t.params && typeof(t.params.devid) === "number") ? t.params.devid : 0x55;
         params.address = (t.params && typeof(t.params.address) === "number") ? t.params.address : 0;
         params.offset = (t.params && typeof(t.params.offset) === "number") ? t.params.offset : params.address;
@@ -335,7 +335,7 @@ var Canarium = function(option) {
             const call_progress = (id, callback, nexttime) => {
                 if (rpc_busy) {
                     const xhr = new XMLHttpRequest();
-                    xhr.open("GET", cors_url + cgi_getprogress);
+                    xhr.open("GET", cors_host + cgi_getprogress);
                     xhr.onerror = () => {
                         console.error("commang.cgi request error.");
                     };
@@ -357,7 +357,7 @@ var Canarium = function(option) {
                 console.log("JSON-RPC --> ", ot);
 
                 const xhr = new XMLHttpRequest();
-                xhr.open("GET", cors_url + rpc_server + "?" + query);
+                xhr.open("GET", cors_host + rpc_server + "?" + query);
                 xhr.timeout = xhr_timeout;
                 xhr.ontimeout = () => {
                     console.error("RPC call timed out.");
@@ -409,8 +409,8 @@ var Canarium = function(option) {
     //------------------------------------------------------------------------
 
     this.version = () => crpc_version;
-    this.settings = (url, rpc) => {
-        cors_url = url;
+    this.settings = (host, rpc) => {
+        cors_host = host;
         rpc_server = rpc;
     };
 

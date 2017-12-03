@@ -7,7 +7,7 @@
   @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.1.1202   s.osafune@j7system.jp
+    v0.1.1203   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
     W4.00.01
@@ -60,7 +60,7 @@ local lshift = require "bit32".lshift
 ca = {}
 
 -- バージョン
-function ca.version() return "0.1.1202" end
+function ca.version() return "0.1.1203" end
 
 -- 進捗表示（必要な場合は外部で定義する）
 function ca.progress(funcname, ...) end
@@ -460,13 +460,19 @@ function ca.config(t)
     end
     if not c then return false end
 
+    local p = 0
     while true do
       local ln = f:read(256)
       if not ln then break end
+      spi("write", {ln:byte(1, -1)}) --<Measures for W4.00.01>--
 
-      for _,b in ipairs{ln:byte(1, -1)} do spi("write", b) end --<Measures for W4.00.01>--
+      if p >= 4 then
+        ca.progress("config", 100, f:seek()*sz)
+        p = 0
+      else
+        p = p + 1
+      end
 
-      ca.progress("config", 100, f:seek()*sz)
     end
 
     local _,d = pio(0x07, 0x07)
