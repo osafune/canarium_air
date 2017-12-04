@@ -6,7 +6,7 @@
   @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.1.1202   s.osafune@j7system.jp
+    v0.1.1204   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
     W4.00.01
@@ -47,6 +47,7 @@ local extract = require "bit32".extract
 local btest = require "bit32".btest
 local schar = require "string".char
 local sform = require "string".format
+local concat = require "table".concat
 local rand = require "math".random
 local shdmem = require "fa".sharedmemory
 local jsonenc = require "cjson".encode
@@ -55,7 +56,7 @@ local jsonenc = require "cjson".encode
 cr = {}
 
 -- バージョン
-function cr.version() return "0.1.1202" end
+function cr.version() return "0.1.1204" end
 
 -- デバッグ表示メソッド（必要があれば外部で定義する）
 function cr.dbgprint(...) end
@@ -73,14 +74,14 @@ local b64table = {
     'w', 'x', 'y', 'z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '_'}
 
 function cr.b64enc(d)
-  local b64str = ""
+  local b64str = {}
   local n = 1
   local m = #d % 3
 
   while n+2 <= #d do
     local b0,b1,b2 = d:byte(n, n+2)
     local chunk = bor(lshift(b0, 16), lshift(b1, 8), b2)
-    b64str = b64str .. b64table[extract(chunk, 18, 6) + 1] .. b64table[extract(chunk, 12, 6) + 1]
+    b64str[#b64str + 1] = b64table[extract(chunk, 18, 6) + 1] .. b64table[extract(chunk, 12, 6) + 1]
       .. b64table[extract(chunk, 6, 6) + 1] .. b64table[extract(chunk, 0, 6) + 1]
 
     n = n + 3
@@ -89,15 +90,15 @@ function cr.b64enc(d)
   if m == 2 then
     local b0,b1 = d:byte(n, n+1)
     local chunk = bor(lshift(b0, 16), lshift(b1, 8))
-    b64str = b64str .. b64table[extract(chunk, 18, 6) + 1] .. b64table[extract(chunk, 12, 6) + 1]
-        .. b64table[extract(chunk, 6, 6) + 1]
+    b64str[#b64str + 1] = b64table[extract(chunk, 18, 6) + 1] .. b64table[extract(chunk, 12, 6) + 1]
+      .. b64table[extract(chunk, 6, 6) + 1]
   elseif m == 1 then
     local b0 = d:byte(n)
     local chunk = lshift(b0, 16)
-    b64str = b64str .. b64table[extract(chunk, 18, 6) + 1] .. b64table[extract(chunk, 12, 6) + 1]
+    b64str[#b64str + 1] = b64table[extract(chunk, 18, 6) + 1] .. b64table[extract(chunk, 12, 6) + 1]
   end
 
-  return b64str
+  return concat(b64str)
 end
 
 
@@ -113,10 +114,6 @@ local rb64table = {
     0x29,0x2a,0x2b,0x2c,0x2d,0x2e,0x2f,0x30,0x31,0x32,0x33, nil, nil, nil, nil, nil}
 
 function cr.b64dec(s)
-  local data = ""
-  local n = 1
-  local e = true
-
   s = s:gsub("%s+", "")
   local m = #s % 4
   if m == 2 then
@@ -127,6 +124,10 @@ function cr.b64dec(s)
     return nil,"input data shortage"
   end
 
+  local data = {}
+  local n = 1
+  local e = true
+
   while n+3 <= #s do
     local b0,b1,b2,b3 = s:byte(n, n+3)
     local c0 = rb64table[b0]
@@ -134,24 +135,24 @@ function cr.b64dec(s)
     local c2 = rb64table[b2]
     local c3 = rb64table[b3]
     if not(c0 and c1 and c2 and c3) then e = false; break end
-    local chunk = bor(lshift(c0, 18), lshift(c1, 12), lshift(c2, 6), c3)
 
+    local chunk = bor(lshift(c0, 18), lshift(c1, 12), lshift(c2, 6), c3)
     if b2 == 0x3d then
       if b3 ~= 0x3d then e = false; break end
-      data = data .. schar(extract(chunk, 16, 8))
+      data[#data + 1] = schar(extract(chunk, 16, 8))
       break
     elseif b3 == 0x3d then
-      data = data .. schar(extract(chunk, 16, 8), extract(chunk, 8, 8))
+      data[#data + 1] = schar(extract(chunk, 16, 8), extract(chunk, 8, 8))
       break
     else
-      data = data .. schar(extract(chunk, 16, 8), extract(chunk, 8, 8), extract(chunk, 0, 8))
+      data[#data + 1] = schar(extract(chunk, 16, 8), extract(chunk, 8, 8), extract(chunk, 0, 8))
     end
 
     n = n + 4
   end
 
   if not e then return nil,"invalid character" end
-  return data
+  return concat(data)
 end
 
 
@@ -181,13 +182,17 @@ end
 local _update = function(f, ...) cr.update(...) end
 
 -- カレントファイルパス変換
+local ena_abspath = false;
 local cur_path = arg[0]:match(".+/")
 
 local _getpath = function(fn)
   if fn:sub(1, 1) ~= "/" then
     if fn:sub(1, 2) == "./" then fn = fn:sub(3, -1) end
     fn = cur_path .. fn
+  elseif not ena_abspath then
+    fn = ""
   end
+
   return fn
 end
 
@@ -204,8 +209,8 @@ end
 -- データのチェックコード生成
 local _checkcode = function (d)
   local x = 0
-  for _,b in ipairs{d:byte(1, -1)} do
-    x = bxor(b, bor(lshift(x, 1), (btest(x, 0x80) and 1 or 0)))
+  for i=1,#d do
+    x = bxor(d:byte(i), bor(lshift(x, 1), (btest(x, 0x80) and 1 or 0)))
   end
   return band(x, 0xff)
 end
@@ -323,7 +328,7 @@ local _do_memrd = function(cstr)
     ca.progress("", 100)
     --
     local s = ">  data :"
-    for _,b in ipairs{res:byte(1, -1)} do s = s .. sform(" %02x", b) end
+    for i=1,#res do s = s .. sform(" %02x", res:byte(i)) end
     cr.dbgprint(s.." ("..#res.."bytes)")
     --]]
     res = cr.b64enc(res)
@@ -422,37 +427,40 @@ function cr.setmethod(name, cmd, func)
   return res
 end
 
+
 -- 進捗表示のアップデート
 function cr.update(...)
-  if prog_func then
-    local s = ""
-    for i,v in ipairs({...}) do
-      if i == 1 then
-        s = s .. sform("%d", v)
-      else
-        s = s .. sform(",%d", v)
-      end
-    end
-    s = prog_txt .. s .. "]}\x00"
+  if not prog_func then return end
 
-    shdmem("write", smem_begin, #s, s)
-    --[[
-    local str = shdmem("read", smem_begin, 100)
-    cr.dbgprint("> shdmem : "..str)
-    --]]
+  local s = ""
+  for i,v in ipairs({...}) do
+    if i == 1 then
+      s = s .. sform("%d", v)
+    else
+      s = s .. sform(",%d", v)
+    end
   end
+  s = prog_txt .. s .. "]}\x00"
+
+  shdmem("write", smem_begin, #s, s)
+  --[[
+  local str = shdmem("read", smem_begin, 100)
+  cr.dbgprint("> shdmem : "..str)
+  --]]
 end
 
 
 -- カレントパスの設定
-function cr.setpath(path)
+function cr.setpath(path, ena_abs)
   if type(path) == "string" then
     if path:sub(1, 1) ~= "/" then
       if path:sub(1, 2) == "./" then path = path:sub(3, -1) end
       path = cur_path .. path
     end
-    if path:sub(-1, -1) ~= "/" then path = path .. "/" end
+    if path:sub(-1) ~= "/" then path = path .. "/" end
     cur_path = path
+
+    ena_abspath = (type(ena_abs) == "boolean" and ena_abs) and true or false;    
   end
 
   return cur_path
@@ -480,7 +488,7 @@ function cr.parse(query)
 
     --[[
     local s = "> decode :"
-    for _,b in ipairs{rp:byte(1, -1)} do s = s .. sform(" %02x",b) end
+    for i=1,#rp do s = s .. sform(" %02x", rp:byte(i)) end
     cr.dbgprint(s)
     --]]
 
@@ -585,7 +593,7 @@ function cr.makequery(t)
   local res = schar(extract(t.id, 8, 8), extract(t.id, 0, 8), #pstr, _checkcode(pstr)) .. pstr
   --[[
   local s = "packet :"
-  for _,b in ipairs{res:byte(1, -1)} do s = s .. sform(" %02x",b) end
+  for i=1,#res do s = s .. sform(" %02x", res:byte(i)) end
   cr.dbgprint(s)
   --]]
   return cr.b64enc(res)

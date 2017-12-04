@@ -15,7 +15,7 @@ Copyright (c) 2017 J-7SYSTEM WORKS LIMITED.
 ========
 
 - FlashAir W-04 ファームW4.00.01
-- Canarium Air I/O v0.1.1120以降
+- Canarium Air I/O v0.1.1204以降
 
 
 使い方
@@ -124,7 +124,7 @@ for(xsum=0,i=0 ; i < n ; i++) {
 
 ファイルパスは次のような書き方ができます。
 
-    *ファイルをフルパスで指定
+    *ファイルをフルパスで指定（許可されている場合のみ）
       "/foo/bar/testfile1.rbf"
 
     *カレントフォルダのファイルを指定

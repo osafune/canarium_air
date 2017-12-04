@@ -7,7 +7,7 @@
   @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.1.1203   s.osafune@j7system.jp
+    v0.1.1204   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
     W4.00.01
@@ -50,17 +50,18 @@ local spi = require "fa".spi
 local i2c = require "fa".i2c
 local remove = require "fa".remove
 local open = require "io".open
-local schar = require "string".char
-local btest = require "bit32".btest
 local bor = require "bit32".bor
-local extract = require "bit32".extract
 local lshift = require "bit32".lshift
+local extract = require "bit32".extract
+local btest = require "bit32".btest
+local schar = require "string".char
+local concat = require "table".concat
 
 -- モジュールオブジェクト
 ca = {}
 
 -- バージョン
-function ca.version() return "0.1.1203" end
+function ca.version() return "0.1.1204" end
 
 -- 進捗表示（必要な場合は外部で定義する）
 function ca.progress(funcname, ...) end
@@ -101,7 +102,7 @@ local _devopen = function(avm, addr)
 
   res = true
   local t = {mode="write", data=0}
-  for i=avm.addrbst,0,-8 do
+  for i=avm.addrbst,0,-8 do  --<Measures for W4.00.01>--
     t.data = extract(addr, i, 8)
     if i2c(t) ~= _r_OK then res = false; break end
   end
@@ -194,7 +195,7 @@ local _avm_memrd = function(self, addr, size)
     if not res then break end
     --[[
     local str = string.format("READ addr %08x :", addr)
-    for _,b in ipairs{res:byte(1, -1)} do str = str .. string.format(" %02x", b) end
+    for i=1,#res do str = str .. string.format(" %02x", res:byte(i)) end
     print(str.." ("..#res.."bytes)")
     addr = addr + len
     --]]
@@ -219,14 +220,14 @@ local _avm_memwr = function(self, addr, wstr)
   local _strwrite = function(a, s)
     --[[
     local str = string.format("WRITE addr %08x :", a)
-    for _,b in ipairs{s:byte(1, -1)} do str = str .. string.format(" %02x", b) end
+    for i=1,#s do str = str .. string.format(" %02x", s:byte(i)) end
     print(str.." ("..#s.."bytes)")
     --]]
     local r,m = _devopen(self, a)
     if not r then return nil,m end
 
-    for _,b in ipairs{s:byte(1, -1)} do --<Measures for W4.00.01>--
-      t_write.data = b
+    for i=1,#s do --<Measures for W4.00.01>--
+      t_write.data = s:byte(i)
       if i2c(t_write) ~= _r_OK then r = nil; break end
     end
     i2c(t_stop)
@@ -419,15 +420,21 @@ function ca.config(t)
     f:seek("set")
     local sz = 100 / ((fs < 1) and 1 or fs)
 
+    local p = 0
     while true do
       local ln = f:read(256)
       if not ln then break end
 
-      local rd = ""
-      for _,b in ipairs{ln:byte(1, -1)} do rd = rd .. schar(rt[b]) end
-      fo:write(rd)
+      local rd = {}
+      for i=1,#ln do rd[i] = schar(rt[ln:byte(i)]) end
+      fo:write(concat(rd))
 
-      ca.progress("config", f:seek()*sz, 0)
+      if p >= 15 then
+        ca.progress("config", f:seek()*sz, 0)
+        p = 0
+      else
+        p = p + 1
+      end
     end
     f:close()
     fo:close()
@@ -466,13 +473,12 @@ function ca.config(t)
       if not ln then break end
       spi("write", {ln:byte(1, -1)}) --<Measures for W4.00.01>--
 
-      if p >= 4 then
+      if p >= 15 then
         ca.progress("config", 100, f:seek()*sz)
         p = 0
       else
         p = p + 1
       end
-
     end
 
     local _,d = pio(0x07, 0x07)
@@ -526,8 +532,8 @@ end
 ------------------------------------------------------------------------------------
 
 -- バイナリデータロード : ファイルを指定のアドレスに読み込む
-function ca.binload(avm, fname, offset)
-  if type(offset) ~= "number" then offset = 0 end
+function ca.binload(avm, fname, addr)
+  if type(addr) ~= "number" then addr = 0 end
 
   ca.progress("binload", 0)
 
@@ -539,14 +545,15 @@ function ca.binload(avm, fname, offset)
   local sz = 100 / ((fs < 1) and 1 or fs)
   local res = true
   local mes
-
-  local aa = offset % 4
+  local p = 0
+  
+  local aa = addr % 4
   if aa ~= 0 then
     local len = 4 - aa
     local data = fbin:read(len)
     if data then
-      res,mes = avm:memwr(offset, data)
-      if res then offset = offset + #data end
+      res,mes = avm:memwr(addr, data)
+      if res then addr = addr + #data end
     end
   end
   if res then
@@ -554,11 +561,16 @@ function ca.binload(avm, fname, offset)
       local data = fbin:read(256)
       if not data then break end
 
-      res,mes = avm:memwr(offset, data)
+      res,mes = avm:memwr(addr, data)
       if not res then break end
-      offset = offset + #data
+      addr = addr + #data
 
-      ca.progress("binload", fbin:seek()*sz)
+      if p >= 15 then
+        ca.progress("binload", fbin:seek()*sz)
+        p = 0
+      else
+        p = p + 1
+      end
     end
   end
   fbin:close()
@@ -571,9 +583,9 @@ end
 
 
 -- バイナリデータセーブ : 指定のメモリエリアをファイルに書き出す
-function ca.binsave(avm, fname, size, offset)
+function ca.binsave(avm, fname, size, addr)
   if not(type(size) == "number" and size > 0) then return false,"parameter error" end
-  if type(offset) ~= "number" then offset = 0 end
+  if type(addr) ~= "number" then addr = 0 end
 
   ca.progress("binsave", 0)
 
@@ -582,18 +594,25 @@ function ca.binsave(avm, fname, size, offset)
 
   local sz = 100 / size
   local res,mes
+  local p = 0
 
   while size > 0 do
     local len = size
     if len > 256 then len = 256 end
 
-    res,mes = avm:memrd(offset, len)
+    res,mes = avm:memrd(addr, len)
     if not res then break end
     fbin:write(res)
 
     size = size - len
-    offset = offset + len
-    ca.progress("binsave", 100-size*sz)
+    addr = addr + len
+
+    if p >= 15 then
+      ca.progress("binsave", 100-size*sz)
+      p = 0
+    else
+      p = p + 1
+    end
   end
   fbin:close()
 
@@ -661,7 +680,7 @@ function ca.hexload(avm, fname, offset)
     if btest(sum+b, 0xff) then return false,"checksum error" end
 
     if rtype ~= 0 then return true end
-    return avm:memwr(offset+ext_addr+addr, data)
+    return avm:memwr(offset + ext_addr + addr, data)
   end
 
   -- モトローラSフォーマットの一行をデコード
@@ -740,7 +759,7 @@ function ca.hexload(avm, fname, offset)
     if not res then break end
 
     lnumber = lnumber + 1
-    ca.progress("hexload", fhex:seek()*sz)
+    if lnumber % 16 == 15 then ca.progress("hexload", fhex:seek()*sz) end
   end
   fhex:close()
 

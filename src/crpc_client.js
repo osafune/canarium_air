@@ -4,7 +4,7 @@
 var Canarium = function(option) {
 
     // Canarium RPC Clientのバージョン
-    const crpc_version = "0.1.1202";
+    const crpc_version = "0.1.1204";
 
     // Canarium RPC サーバーのタイムアウト時間（デフォルト180秒）
     const xhr_timeout = 180 * 1000;
@@ -107,21 +107,23 @@ var Canarium = function(option) {
         p.push((d >> 0) & 0xff);
     };
 
-    const _push_avm = (p, cmd, devid, addr) => {
+    const _push_str = (p, str) => {
+        for (let i = 0; i < str.length; i++) p.push(str.charCodeAt(i));
+    };
+
+    const _array_avm = (cmd, devid, addr) => {
+        let p = new Array();
         p.push(cmd);
         p.push(devid & 0xff);
         _push_word32(p, addr);
-    };
 
-    const _push_str = (p, str) => {
-        for (let i = 0; i < str.length; i++) p.push(str.charCodeAt(i));
+        return p;
     };
 
 
     // CHECKメソッドパケット作成
     const _mm_check = (params) => {
         let p = new Array();
-
         p.push(0x01);
 
         return p;
@@ -130,7 +132,6 @@ var Canarium = function(option) {
     // CONFメソッドパケット作成
     const _mm_conf = (params) => {
         let p = new Array();
-
         p.push((params.cache === false) ? 0x09 : 0x08);
         _push_str(p, params.file);
 
@@ -140,7 +141,6 @@ var Canarium = function(option) {
     // FCONFメソッドパケット作成
     const _mm_fconf = (params) => {
         let p = new Array();
-
         p.push(0x09);
         _push_str(p, params.file);
 
@@ -149,9 +149,7 @@ var Canarium = function(option) {
 
     // IOWRメソッドパケット作成
     const _mm_iowr = (params) => {
-        let p = new Array();
-
-        _push_avm(p, 0x10, params.devid, params.address);
+        let p = _array_avm(0x10, params.devid, params.address);
         _push_word32(p, params.data);
 
         return p;
@@ -159,18 +157,12 @@ var Canarium = function(option) {
 
     // IORDメソッドパケット作成
     const _mm_iord = (params) => {
-        let p = new Array();
-
-        _push_avm(p, 0x11, params.devid, params.address);
-
-        return p;
+        return _array_avm(0x11, params.devid, params.address);
     };
 
     // MEMWRメソッドパケット作成
     const _mm_memwr = (params) => {
-        let p = new Array();
-
-        _push_avm(p, 0x18, params.devid, params.address);
+        let p = _array_avm(0x18, params.devid, params.address);
 
         let data_obj = (typeof(params.data) === "string") ? b64dec(params.data) : params.data;
         let data_arr = new Uint8Array(data_obj);
@@ -183,12 +175,9 @@ var Canarium = function(option) {
 
     // MEMRDメソッドパケット作成
     const _mm_memrd = (params) => {
-        let p = new Array();
-
-        _push_avm(p, 0x19, params.devid, params.address);
-
         if (params.size > 256) return null;
 
+        let p = _array_avm(0x19, params.devid, params.address);
         _push_word16(p, params.size);
 
         return p;
@@ -198,9 +187,7 @@ var Canarium = function(option) {
 
     // BLOADメソッドパケット作成
     const _mm_bload = (params) => {
-        let p = new Array();
-
-        _push_avm(p, 0x20, params.devid, params.address);
+        let p = _array_avm(0x20, params.devid, params.address);
         _push_str(p, params.file);
 
         return p;
@@ -208,9 +195,7 @@ var Canarium = function(option) {
 
     // BSAVEメソッドパケット作成
     const _mm_bsave = (params) => {
-        let p = new Array();
-
-        _push_avm(p, 0x21, params.devid, params.address);
+        let p = _array_avm(0x21, params.devid, params.address);
         _push_word32(p, params.size);
         _push_str(p, params.file);
 
@@ -219,9 +204,7 @@ var Canarium = function(option) {
 
     // LOADメソッドパケット作成
     const _mm_load = (params) => {
-        let p = new Array();
-
-        _push_avm(p, 0x22, params.devid, params.offset);
+        let p = _array_avm(0x22, params.devid, params.offset);
         _push_str(p, params.file);
 
         return p;
@@ -256,25 +239,19 @@ var Canarium = function(option) {
 
     // メソッド追加と削除
     const addmethod = (name, qfunc, pfunc) => {
-        let res = false;
+        if (typeof(name) !== "string" || (qfunc && typeof(qfunc) !== "function")) return false;
 
-        if (typeof(name) === "string") {
-            if (typeof(qfunc) === "function") {
-                method[name] = {
-                    qfunc: qfunc,
-                    pfunc: (typeof(pfunc) === "function") ? pfunc : _post_default
-                };
-                res = true;
-
-            } else if (!qfunc) {
-                delete method[name];
-                res = true;
-
-            }
+        if (qfunc) {
+            method[name] = {
+                qfunc: qfunc,
+                pfunc: (typeof(pfunc) === "function") ? pfunc : _post_default
+            };
+        } else {
+            delete method[name];
         }
 
         console.log(method);
-        return res;
+        return true;
     }
 
 
