@@ -145,7 +145,7 @@ res,mes = ca.config{file="/foo/bar.rbf"}
   失敗要因のメッセージを *string* で返します。
 
 ----
-ca.open(*`table`*)
+ca.open( [*`table`*] )
 ------------------
 
 Qsysモジュールへのアクセスオブジェクトを取得します。
@@ -291,7 +291,7 @@ res,mes = avm:iowr(0x10000000, "\x01\x02\x03\x04\x05\x06")
   失敗要因のメッセージを *string* で返します。
 
 ---
-ca.binload(*`avm`*, *`file`*, *`addr`*)
+ca.binload(*`avm`*, *`file`*, [*`addr`*] )
 ---------------------------------
 
 取得したアクセスオブジェクトのメモリ空間にファイルイメージをロードします。  
@@ -327,7 +327,7 @@ res,mes = avm:bload("/foo/bar.bin", 0x2000)
   失敗要因のメッセージを *string* で返します。
 
 ---
-ca.binsave(*`avm`*, *`file`*, *`size`*, *`addr`*)
+ca.binsave(*`avm`*, *`file`*, *`size`*, [*`addr`*] )
 ---------------------------------
 
 取得したアクセスオブジェクトのメモリ空間からバイトイメージをファイルにセーブします。  
@@ -366,7 +366,7 @@ res,mes = avm:bsave("/foo/bar.bin", 8192, 0x1000)
   失敗要因のメッセージを *string* で返します。
 
 ---
-ca.hexload(*`avm`*, *`file`*, *`offset`*)
+ca.hexload(*`avm`*, *`file`*, [*`offset`*] )
 ---------------------------------
 
 取得したアクセスオブジェクトのメモリ空間にIntelHEXまたはS-record形式のファイルをロードします。  
@@ -392,7 +392,8 @@ res,mes = avm:load("/foo/bar.hex")
   ロードするIntelHEXまたはS-recordファイルをフルパスで指定します。フォーマットは自動認識されます。
 
   - `offset`  
-  オフセットアドレスを *number* で指定します。省略時は `0` です。
+  アドレスオフセットを *number* で指定します。省略時は `0` です。  
+  この引数を省略した場合は、IntelHEXまたはS-recordファイルのアブソリュートアドレスでロードが行われます。
 
 - 返値
   - `res`  
