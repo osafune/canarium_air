@@ -4,7 +4,7 @@
 var Canarium = function(option) {
 
     // Canarium RPC Clientのバージョン
-    const crpc_version = "0.1.1204";
+    const crpc_version = "0.2.0101";
 
     // Canarium RPC サーバーのタイムアウト時間（デフォルト180秒）
     const xhr_timeout = 180 * 1000;
@@ -13,8 +13,8 @@ var Canarium = function(option) {
     const cgi_getprogress = "/command.cgi?op=130&ADDR=512&LEN=100";
 
     // RPCサーバーのURLを保存する変数
-    let cors_host = "http://192.168.1.200";
-    let rpc_server = "/lua/crs.lua";
+    let cors_host = "";
+    let rpc_server = "/crs.lua";
 
 
     //------------------------------------------------------------------------
@@ -55,7 +55,7 @@ var Canarium = function(option) {
 
     // Base64urlのデコード
     const b64dec = (str) => {
-        let res = new Array();
+        let res = new Array(); // 速度重視
         let p = -8,
             a = 0,
             c;
@@ -73,7 +73,7 @@ var Canarium = function(option) {
 
         let bin = new ArrayBuffer(res.length);
         let bin_arr = new Uint8Array(bin);
-        for (let i = 0; i < res.length; i++) bin_arr[i] = res[i];
+        for (let i = 0; i < res.length; i++) bin_arr[i] = res[i]; //速度重視
 
         return bin;
     };
@@ -84,7 +84,7 @@ var Canarium = function(option) {
 
         let bin_arr = new Uint8Array(bin);
         let s = "";
-        for (let i = 0; i < bin_arr.byteLength; i++) s += (' ' + toHex(bin_arr[i], 2));
+        bin_arr.forEach((v) => { s += (' ' + toHex(v, 2)); });
 
         return s;
     };
@@ -112,7 +112,7 @@ var Canarium = function(option) {
     };
 
     const _array_avm = (cmd, devid, addr) => {
-        let p = new Array();
+        let p = [];
         p.push(cmd);
         p.push(devid & 0xff);
         _push_word32(p, addr);
@@ -123,7 +123,7 @@ var Canarium = function(option) {
 
     // CHECKメソッドパケット作成
     const _mm_check = (params) => {
-        let p = new Array();
+        let p = [];
         p.push(0x01);
 
         return p;
@@ -131,7 +131,7 @@ var Canarium = function(option) {
 
     // CONFメソッドパケット作成
     const _mm_conf = (params) => {
-        let p = new Array();
+        let p = [];
         p.push((params.cache === false) ? 0x09 : 0x08);
         _push_str(p, params.file);
 
@@ -140,7 +140,7 @@ var Canarium = function(option) {
 
     // FCONFメソッドパケット作成
     const _mm_fconf = (params) => {
-        let p = new Array();
+        let p = [];
         p.push(0x09);
         _push_str(p, params.file);
 
@@ -168,7 +168,7 @@ var Canarium = function(option) {
         let data_arr = new Uint8Array(data_obj);
         if (data_arr.byteLength > 64) return null;
 
-        for (i = 0; i < data_arr.byteLength; i++) p.push(data_arr[i]);
+        data_arr.forEach((v) => { p.push(v); });
 
         return p;
     };
@@ -225,6 +225,7 @@ var Canarium = function(option) {
 
     // メソッドテーブル
     let method = {
+        VER: { pfunc: _post_default },
         CHECK: { qfunc: _mm_check, pfunc: _post_default },
         CONF: { qfunc: _mm_conf, pfunc: _post_default },
         FCONF: { qfunc: _mm_fconf, pfunc: _post_default },
@@ -252,7 +253,7 @@ var Canarium = function(option) {
 
         console.log(method);
         return true;
-    }
+    };
 
 
     // オブジェクトからCanarium RPCクエリを取得
@@ -292,10 +293,10 @@ var Canarium = function(option) {
         bin_arr[2] = payload.length;
 
         let xsum = 0;
-        for (let i = 0; i < payload.length; i++) {
-            xsum = (payload[i] ^ ((xsum << 1) | ((xsum & 0x80) ? 1 : 0))) & 0xff;
-            bin_arr[i + 4] = payload[i];
-        }
+        payload.forEach((v, i) => {
+            xsum = (v ^ ((xsum << 1) | ((xsum & 0x80) ? 1 : 0))) & 0xff;
+            bin_arr[i + 4] = v;
+        });
         bin_arr[3] = xsum;
 
         console.log("packet :" + toHexstr(bin));
@@ -339,12 +340,12 @@ var Canarium = function(option) {
                 xhr.ontimeout = () => {
                     console.error("RPC call timed out.");
                     rpc_busy = false;
-                    reject(xhr.statusText);
+                    reject(new Error(xhr.statusText));
                 };
                 xhr.onerror = () => {
                     console.error("RPC call request error.");
                     rpc_busy = false;
-                    reject(xhr.statusText);
+                    reject(new Error(xhr.statusText));
                 };
                 xhr.onload = () => {
                     let res = xhr.responseText;
@@ -352,7 +353,7 @@ var Canarium = function(option) {
 
                     if (typeof(t) !== "string") {
                         res = JSON.parse(res);
-                        res.result = method[ot.method].pfunc(res.result);
+                        if (res.result) res.result = method[ot.method].pfunc(res.result);
                     }
 
                     rpc_busy = false;
@@ -360,7 +361,7 @@ var Canarium = function(option) {
                 };
                 xhr.send();
 
-                let nexttime = (typeof(prog_time) === "number" && prog_time >= 100) ? prog_time : 500;
+                let nexttime = (typeof(prog_time) !== "number") ? 500 : (prog_time < 100) ? 100 : prog_time;
                 if (typeof(prog_callback) === "function") {
                     setTimeout(() => {
                         call_progress(ot.id, prog_callback, nexttime);

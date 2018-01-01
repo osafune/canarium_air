@@ -55,17 +55,17 @@ Canarium RPC Client
 Canarium RPC Server
 -------------------
 
-- [Canarium RPC v0.1.1204](canarium_rpc_doc.md)
+- [Canarium RPC v0.2.0101](canarium_rpc_doc.md)
 
 
 Canarium Air I/O
 ----------------
 
-- [Canarium Air I/O v0.1.1204](canarium_air_doc.md)
+- [Canarium Air I/O v0.2.0101](canarium_air_doc.md)
 
 
 ライセンス
 =========
 
 [The MIT License (MIT)](https://opensource.org/licenses/MIT)  
-Copyright (c) 2017 J-7SYSTEM WORKS LIMITED.
+Copyright (c) 2017,2018 J-7SYSTEM WORKS LIMITED.

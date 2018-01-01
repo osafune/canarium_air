@@ -4,13 +4,13 @@
 --    PERIDOT-AIR configuration & Avalon-MM access library                        --
 ------------------------------------------------------------------------------------
   @author Shun OSAFUNE <s.osafune@j7system.jp>
-  @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED.
+  @copyright The MIT License (MIT); (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.1.1204   s.osafune@j7system.jp
+    v0.2.0101   s.osafune@j7system.jp (W4.01.00 evaluation)
 
   *Requirement FlashAir firmware version
-    W4.00.01
+    W4.00.01+
 
   *FlashAir I/O connection
     CMD  <---> DATA0(SCL)
@@ -22,7 +22,7 @@
 
 ------------------------------------------------------------------------------------
 -- The MIT License (MIT)
--- Copyright (c) 2017 J-7SYSTEM WORKS LIMITED.
+-- Copyright (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
 --
 -- Permission is hereby granted, free of charge, to any person obtaining a copy of
 -- this software and associated documentation files (the "Software"), to deal in
@@ -61,13 +61,18 @@ local concat = require "table".concat
 ca = {}
 
 -- バージョン
-function ca.version() return "0.1.1204" end
+function ca.version() return "0.2.0101" end
 
 -- 進捗表示（必要な場合は外部で定義する）
 function ca.progress(funcname, ...) end
 
 -- fa.i2cの正常レスポンス
-local _r_OK = "OK\n" --<Measures for W4.00.01>--
+--<Measures for W4.00.01>--
+local _r_OK = "OK\n"
+--]]
+--[[ --<Measures for W4.01.00>--
+local _r_OK = "OK"
+--]]
 
 ------------------------------------------------------------------------------------
 -- AvalonMMバスアクセス
@@ -101,11 +106,18 @@ local _devopen = function(avm, addr)
   end
 
   res = true
+  --<Measures for W4.00.01>--
   local t = {mode="write", data=0}
-  for i=avm.addrbst,0,-8 do  --<Measures for W4.00.01>--
+  for i=avm.addrbst,0,-8 do
     t.data = extract(addr, i, 8)
     if i2c(t) ~= _r_OK then res = false; break end
   end
+  --]]
+  --[[ --<Measures for W4.01.00>--
+  local s = ""
+  for i=avm.addrbst,0,-8 do s = s .. schar(extract(addr, i, 8)) end
+  if i2c{mode="write", data=s} ~= _r_OK then res = false end
+  --]]
   if not res then
     i2c{mode="stop"}
     return false,"address write error"
@@ -149,12 +161,17 @@ local _avm_iowr = function(self, addr, wdat)
 
   local res,mes = _devopen(self, addr)
   if not res then return nil,mes end
-
+  --<Measures for W4.00.01>--
   local t = {mode="write", data=0}
-  for i=0,24,8 do  --<Measures for W4.00.01>--
+  for i=0,24,8 do
     t.data = extract(wdat, i, 8)
     if i2c(t) ~= _r_OK then res = false; break end
   end
+  --]]
+  --[[ --<Measures for W4.01.00>--
+  local t = {mode="write", data=schar(extract(wdat,0,8), extract(wdat,8,8), extract(wdat,16,8), extract(wdat,24,8))}
+  if i2c(t) ~= _r_OK then res = false end
+  --]]
   i2c{mode="stop"}
   if not res then return nil,"I/O write error" end
 
@@ -167,8 +184,13 @@ local _avm_memrd = function(self, addr, size)
   if type(addr) ~= "number" or type(size) ~= "number" then return nil,"parameter error" end
   if size < 1 then return "" end
 
-  local t_stop = {mode="stop"}
+  --<Measures for W4.00.01>--
   local t_read = {mode="read", bytes=0, type="binary"}
+  --]]
+  --[[ --<Measures for W4.01.00>--
+  local t_read = {mode="read", bytes=0, type="string"}
+  --]]
+  local t_stop = {mode="stop"}
   local _strread = function(r, ...)
     i2c(t_stop)
     if r ~= _r_OK then return nil,"memory read error" end
@@ -191,15 +213,25 @@ local _avm_memrd = function(self, addr, size)
     local len = size
     if len > self.rdsplit then len = self.rdsplit end
     t_read.bytes = len
-    res,mes = _strread(i2c(t_read)) --<Measures for W4.00.01>--
+    --<Measures for W4.00.01>--
+    res,mes = _strread(i2c(t_read))
     if not res then break end
+    --]]
+    --[[ --<Measures for W4.01.00>--
+    mes,res = i2c(t_read)
+    i2c(t_stop)
+    if mes ~= _r_OK then
+      res,mes = nil,"memory read error"
+      break
+    end
+    --]]
+
     --[[
     local str = string.format("READ addr %08x :", addr)
     for i=1,#res do str = str .. string.format(" %02x", res:byte(i)) end
     print(str.." ("..#res.."bytes)")
     addr = addr + len
     --]]
-
     rstr = rstr .. res
     size = size - len
   end
@@ -215,8 +247,8 @@ local _avm_memwr = function(self, addr, wstr)
   if type(addr) ~= "number" or type(wstr) ~= "string" then return nil,"parameter error" end
   if #wstr < 1 then return true end
 
-  local t_stop = {mode="stop"}
   local t_write = {mode="write", data=0}
+  local t_stop = {mode="stop"}
   local _strwrite = function(a, s)
     --[[
     local str = string.format("WRITE addr %08x :", a)
@@ -226,10 +258,16 @@ local _avm_memwr = function(self, addr, wstr)
     local r,m = _devopen(self, a)
     if not r then return nil,m end
 
-    for i=1,#s do --<Measures for W4.00.01>--
+    --<Measures for W4.00.01>--
+    for i=1,#s do
       t_write.data = s:byte(i)
       if i2c(t_write) ~= _r_OK then r = nil; break end
     end
+    --]]
+    --[[ --<Measures for W4.01.00>--
+    t_write.data = s
+    if i2c(t_write) ~= _r_OK then r = nil end
+    --]]
     i2c(t_stop)
 
     if not r then return nil,"memory write error" end
@@ -338,7 +376,12 @@ function ca.open(t)
 
   return {
       devid = dev,
+      --<Measures for W4.00.01>--
       i2cfreq = freq,
+      --]]
+      --[[ --<Measures for W4.01.00>--
+      i2cfreq = freq .. "",
+      --]]
       addrbst = (adb - 1) * 8,
       rdsplit = rds,
       wrsplit = wrs,
@@ -471,7 +514,12 @@ function ca.config(t)
     while true do
       local ln = f:read(256)
       if not ln then break end
-      spi("write", {ln:byte(1, -1)}) --<Measures for W4.00.01>--
+      --<Measures for W4.00.01>--
+      spi("write", {ln:byte(1, -1)})
+      --]]
+      --[[ --<Measures for W4.01.00>--
+      spi("write", ln)
+      --]]
 
       if p >= 15 then
         ca.progress("config", 100, f:seek()*sz)

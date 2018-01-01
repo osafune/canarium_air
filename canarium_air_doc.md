@@ -9,13 +9,13 @@ Canarium Air I/OはFlashAirからFPGAのコンフィグレーションおよび�
 =========
 
 [The MIT License (MIT)](https://opensource.org/licenses/MIT)  
-Copyright (c) 2017 J-7SYSTEM WORKS LIMITED.
+Copyright (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
 
 
 対象環境
 =======
 
-- FlashAir W-04 ファームW4.00.01
+- FlashAir W-04 ファームW4.00.01以降
 - Intel FPGA (CycloneIV E, Cyclone10 LP, MAX10)
 - QuartusPrime 17.0以降
 
@@ -405,4 +405,4 @@ res,mes = avm:load("/foo/bar.hex")
 
 ---
 
-&copy; 2017 J-7SYSTEM WORKS LIMITED
+&copy; 2017,2018 J-7SYSTEM WORKS LIMITED

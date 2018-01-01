@@ -3,20 +3,20 @@
 --  Canarium Air RPC Server module                                                --
 ------------------------------------------------------------------------------------
   @author Shun OSAFUNE <s.osafune@j7system.jp>
-  @copyright The MIT License (MIT); (c) 2017 J-7SYSTEM WORKS LIMITED.
+  @copyright The MIT License (MIT); (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.1.1204   s.osafune@j7system.jp
+    v0.2.0101   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
-    W4.00.01
+    W4.00.01 or later
 
   *Requirement Canarium Air version
     v0.1.1120 or later
 
 ------------------------------------------------------------------------------------
 -- The MIT License (MIT)
--- Copyright (c) 2017 J-7SYSTEM WORKS LIMITED.
+-- Copyright (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
 --
 -- Permission is hereby granted, free of charge, to any person obtaining a copy of
 -- this software and associated documentation files (the "Software"), to deal in
@@ -39,6 +39,7 @@
 --]]
 
 -- 外部モジュール
+local lines = require "io".lines
 local band = require "bit32".band
 local bor = require "bit32".bor
 local bxor = require "bit32".bxor
@@ -56,7 +57,7 @@ local jsonenc = require "cjson".encode
 cr = {}
 
 -- バージョン
-function cr.version() return "0.1.1204" end
+function cr.version() return "0.2.0101" end
 
 -- デバッグ表示メソッド（必要があれば外部で定義する）
 function cr.dbgprint(...) end
@@ -217,10 +218,17 @@ end
 
 -- VERメソッド実行
 local _do_version = function()
+  local config = {}
+  for ln in lines("/SD_WLAN/CONFIG") do
+    local k, v = ln:match("([^,]+)=([^,]+)%c+")
+    if k ~= nil and v ~= nil then config[k] = v end
+  end
+
   return {
     rpc_version = cr.version(),
     lib_version = ca.version(),
-    copyright = "(c)2017 J-7SYSTEM WORKS LIMITED."
+    fa_version = config["VERSION"],
+    copyright = "(c)2017,2018 J-7SYSTEM WORKS LIMITED."
   }, nil
 end
 

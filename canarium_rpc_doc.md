@@ -8,13 +8,13 @@ Canarium RPCはFlashAirを使ってFPGAリソースへのアクセスを提供�
 ==========
 
 [The MIT License (MIT)](https://opensource.org/licenses/MIT)  
-Copyright (c) 2017 J-7SYSTEM WORKS LIMITED.
+Copyright (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
 
 
 対象環境
 ========
 
-- FlashAir W-04 ファームW4.00.01
+- FlashAir W-04 ファームW4.00.01以降
 - Canarium Air I/O v0.1.1204以降
 
 
@@ -232,7 +232,7 @@ res_json = cr.parse(query)
   +1   ID値(下位8bit)
   +2   ペイロード長(5バイト目以降のデータ長を示す)
   +3   チェック値(ペイロードデータの各バイトを演算した値)
-  +4   ペイロードデータ(FlashAir W4.00.01では最大70バイト)
+  +4   ペイロードデータ(FlashAir W-04では最大70バイト)
   :
  +73
 ```
@@ -309,7 +309,7 @@ JSONレスポンス
   正常終了の場合に結果が入ります。 *boolean*、*number* (32bit整数値)、*string* (Base64urlでエンコードされたバイナリ列)、*object* 等が格納されます。
 
   - `error`  
-  エラーの場合は、`resulut` の代わりにこのオブジェクトを返します。
+  エラーの場合は、`result` の代わりにこのオブジェクトを返します。
     - `code` : エラーコードが *number* で入ります。値はJSON-RPCに準拠します。
     - `message` : エラーメッセージがある場合は *string* で入ります。
 
@@ -341,6 +341,7 @@ VERクエリ
   RPCサーバーのバージョン情報を *object* で返します。
     - `rpc_version` : Canarium RPCのバージョンが *string* で入ります。
     - `lib_version` : Canarium Air I/Oのバージョンが *string* で入ります。
+    - `fa_version` : FlashAirのファームウェアバージョンが *string* で入ります。
 
 
 ---
@@ -632,4 +633,4 @@ JSON形式で下記のようにデータが返ります。
 
 ---
 
-&copy; 2017 J-7SYSTEM WORKS LIMITED
+&copy; 2017,2018 J-7SYSTEM WORKS LIMITED
