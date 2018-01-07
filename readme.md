@@ -34,7 +34,7 @@ Luaスクリプトを使って自動的なセットアップやバッチ処理�
 
 ※ 現状はお試しバージョンです。
 
-- FlashAir W-04 ファームW4.00.01
+- FlashAir W-04 ファームW4.00.01+
 - Intel FPGA (CycloneIV E, Cyclone10 LP, MAX10)
 - QuartusPrime 17.0以降
 
@@ -55,7 +55,7 @@ Canarium RPC Client
 Canarium RPC Server
 -------------------
 
-- [Canarium RPC v0.2.0101](canarium_rpc_doc.md)
+- [Canarium RPC v0.2.0108](canarium_rpc_doc.md)
 
 
 Canarium Air I/O

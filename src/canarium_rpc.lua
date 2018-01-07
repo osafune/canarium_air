@@ -6,13 +6,13 @@
   @copyright The MIT License (MIT); (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.2.0101   s.osafune@j7system.jp
+    v0.2.0108   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
     W4.00.01 or later
 
   *Requirement Canarium Air version
-    v0.1.1120 or later
+    v0.2.0101 or later
 
 ------------------------------------------------------------------------------------
 -- The MIT License (MIT)
@@ -57,7 +57,7 @@ local jsonenc = require "cjson".encode
 cr = {}
 
 -- バージョン
-function cr.version() return "0.2.0101" end
+function cr.version() return "0.2.0108" end
 
 -- デバッグ表示メソッド（必要があれば外部で定義する）
 function cr.dbgprint(...) end
@@ -163,7 +163,8 @@ end
 
 -- 進捗表示処理（ファンクションの待避とヘッダ部の設定）
 local prog_func,prog_txt = nil,""
-local smem_begin = 512
+local smem_begin = 512    -- 進捗情報を書き込む先頭バイト位置
+local smem_length = 100   -- 進捗情報取得サイズ
 
 local _setprog = function(key, id, cmd)
   if not key then
@@ -197,6 +198,17 @@ local _getpath = function(fn)
   return fn
 end
 
+-- CONFIG情報取得
+local _get_faconfig = function()
+  local conf = {}
+  for ln in lines("/SD_WLAN/CONFIG") do
+    local k,v = ln:match("([^,]+)=([^,]+)%c+")
+    if k ~= nil and v ~= nil then conf[k] = v end
+  end
+
+  return conf;
+end
+
 -- バイト列から32bitワードを取得
 local _get_word32 = function(s, n)
   return bor(lshift(s:byte(n, n), 24), lshift(s:byte(n+1, n+1), 16), lshift(s:byte(n+2, n+2), 8), s:byte(n+3, n+3))
@@ -218,18 +230,16 @@ end
 
 -- VERメソッド実行
 local _do_version = function()
-  local config = {}
-  for ln in lines("/SD_WLAN/CONFIG") do
-    local k, v = ln:match("([^,]+)=([^,]+)%c+")
-    if k ~= nil and v ~= nil then config[k] = v end
-  end
+  local config = _get_faconfig()
 
   return {
     rpc_version = cr.version(),
     lib_version = ca.version(),
     fa_version = config["VERSION"],
+    fa_product = config["PRODUCT"],
+    fa_vendor = config["VENDOR"],
     copyright = "(c)2017,2018 J-7SYSTEM WORKS LIMITED."
-  }, nil
+  }
 end
 
 -- CHECKメソッド実行
@@ -237,6 +247,24 @@ local _do_check = function(cstr)
   cr.dbgprint("> check")
 
   return (ca.config() and 1 or 0)
+end
+
+-- STATメソッド実行
+local _do_status = function(cstr)
+  cr.dbgprint("> stat")
+
+  local config = _get_faconfig()
+
+  return {
+    current_path = cr.setpath(),
+    absolute_access = ena_abspath,
+    progjson_begin = smem_begin,
+    progjson_length = smem_length,
+    file_upload = (config["UPLOAD"] == "1"),
+    cid = config["CID"],
+    appinfo = config["APPINFO"],
+    mastercode = config["MASTERCODE"]
+  }
 end
 
 -- CONFメソッド実行
@@ -402,6 +430,7 @@ end
 -- メソッドテーブルの設定
 local method = {
     [0x01] = {func = _do_check, name = "CHECK"},
+    [0x02] = {func = _do_status, name = "STAT"},
     [0x08] = {func = _do_config, name = "CONF"},
     [0x09] = {func = _do_fconfig, name = "FCONF"},
     [0x10] = {func = _do_iowr, name = "IOWR"},
@@ -550,7 +579,7 @@ function cr.makequery(t)
   end
   if not name then return nil,"invalid command" end
 
-  if name == "CHECK" or name == "VER" then
+  if name == "VER" or name == "CHECK" or name == "STAT"then
     pstr = schar(cmd)
 
   elseif name == "CONF" or name == "FCONF" then

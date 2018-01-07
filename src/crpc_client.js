@@ -4,17 +4,23 @@
 var Canarium = function(option) {
 
     // Canarium RPC Clientのバージョン
-    const crpc_version = "0.2.0101";
+    const crpc_version = "0.2.0108";
 
     // Canarium RPC サーバーのタイムアウト時間（デフォルト180秒）
     const xhr_timeout = 180 * 1000;
 
-    // FlashAirの共有メモリ読み出しCGI
-    const cgi_getprogress = "/command.cgi?op=130&ADDR=512&LEN=100";
-
     // RPCサーバーのURLを保存する変数
     let cors_host = "";
     let rpc_server = "/crs.lua";
+    let cur_path = "/";
+    let work_path = cur_path + "work/";
+
+    // FlashAirの共有メモリ読み出しCGI
+    let cgi_getprogress = "/command.cgi?op=130&ADDR=512&LEN=100";
+
+    // デバッグログ出力用
+    let dbg_print = false; //true;
+    const dbg_log = (x) => (dbg_print) ? console.log(x) : null;
 
 
     //------------------------------------------------------------------------
@@ -129,6 +135,33 @@ var Canarium = function(option) {
         return p;
     };
 
+    // STATメソッドパケット作成
+    const _mm_stat = (params) => {
+        let p = [];
+        p.push(0x02);
+
+        return p;
+    };
+    // STATメソッドのポスト処理
+    const _mm_stat_post = (res) => {
+        let temp = cgi_getprogress.split("&");
+        cgi_getprogress = temp[0] + "&ADDR=" + res.progjson_begin + "&LEN=" + res.progjson_length;
+
+        cur_path = res.current_path;
+        work_path = cur_path + "work/";
+
+        console.log("Card ID     : 0x" + res.cid);
+        console.log("App-info ID : 0x" + res.appinfo);
+        console.log("CORS Host   : " + cors_host);
+        console.log("RPC Server  : " + rpc_server);
+        console.log("Current path: " + cur_path);
+        console.log("Work path   : " + work_path);
+        console.log("Progress URI: " + cgi_getprogress);
+        console.log("Upload cgi  : " + res.file_upload);
+
+        return res;
+    };
+
     // CONFメソッドパケット作成
     const _mm_conf = (params) => {
         let p = [];
@@ -227,6 +260,7 @@ var Canarium = function(option) {
     let method = {
         VER: { pfunc: _post_default },
         CHECK: { qfunc: _mm_check, pfunc: _post_default },
+        STAT: { qfunc: _mm_stat, pfunc: _mm_stat_post },
         CONF: { qfunc: _mm_conf, pfunc: _post_default },
         FCONF: { qfunc: _mm_fconf, pfunc: _post_default },
         IOWR: { qfunc: _mm_iowr, pfunc: _post_default },
@@ -251,7 +285,7 @@ var Canarium = function(option) {
             delete method[name];
         }
 
-        console.log(method);
+        dbg_log(method);
         return true;
     };
 
@@ -299,7 +333,7 @@ var Canarium = function(option) {
         });
         bin_arr[3] = xsum;
 
-        console.log("packet :" + toHexstr(bin));
+        dbg_log("packet :" + toHexstr(bin));
         return b64enc(bin);
     };
 
@@ -332,7 +366,7 @@ var Canarium = function(option) {
             let query = (typeof(t) === "string" && ot.jsonrpc !== "2.0") ? ERROR_JSON : getquery(ot);
 
             if (typeof(query) === "string") {
-                console.log("JSON-RPC --> ", ot);
+                dbg_log("JSON-RPC --> " + query);
 
                 const xhr = new XMLHttpRequest();
                 xhr.open("GET", cors_host + rpc_server + "?" + query);
@@ -349,11 +383,11 @@ var Canarium = function(option) {
                 };
                 xhr.onload = () => {
                     let res = xhr.responseText;
-                    console.log("JSON-RPC <-- ", JSON.parse(res));
+                    dbg_log("JSON-RPC <-- " + res);
 
                     if (typeof(t) !== "string") {
                         res = JSON.parse(res);
-                        if (res.result) res.result = method[ot.method].pfunc(res.result);
+                        if ("result" in res) res.result = method[ot.method].pfunc(res.result);
                     }
 
                     rpc_busy = false;
@@ -390,6 +424,7 @@ var Canarium = function(option) {
     this.settings = (host, rpc) => {
         cors_host = host;
         rpc_server = rpc;
+        return crpc_call({ method: "STAT" });
     };
 
     this.addmethod = addmethod;

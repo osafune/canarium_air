@@ -6,7 +6,7 @@
 @copyright The MIT License (MIT); (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.2.0101   s.osafune@j7system.jp
+    v0.2.0108   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
     W4.00.01 or later
@@ -17,8 +17,8 @@
 --]]
 
 -- 格納したフォルダに修正
-require "/lua/canarium_air"
-require "/lua/canarium_rpc"
+require "/crpc/canarium_air"
+require "/crpc/canarium_rpc"
 
 -- カレントフォルダをルート以外にする場合に追加
 --cr.setpath("/foo/bar")

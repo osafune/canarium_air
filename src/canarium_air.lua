@@ -184,18 +184,18 @@ local _avm_memrd = function(self, addr, size)
   if type(addr) ~= "number" or type(size) ~= "number" then return nil,"parameter error" end
   if size < 1 then return "" end
 
+  local t_stop = {mode="stop"}
   --<Measures for W4.00.01>--
   local t_read = {mode="read", bytes=0, type="binary"}
-  --]]
-  --[[ --<Measures for W4.01.00>--
-  local t_read = {mode="read", bytes=0, type="string"}
-  --]]
-  local t_stop = {mode="stop"}
   local _strread = function(r, ...)
     i2c(t_stop)
     if r ~= _r_OK then return nil,"memory read error" end
     return schar(...)
   end
+  --]]
+  --[[ --<Measures for W4.01.00>--
+  local t_read = {mode="read", bytes=0, type="string"}
+  --]]
 
   local res,mes = _devopen(self, addr)
   if not res then return nil,mes end
