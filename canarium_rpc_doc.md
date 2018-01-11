@@ -1,8 +1,11 @@
-Canarium RPC
-============
+Canarium RPC Server
+===================
 
 Canarium RPCはFlashAirを使ってFPGAリソースへのアクセスを提供するリモートプロシージャコール(RPC)ライブラリです。  
-インターフェースはJSON-RPCをベースにFlashAirのHTTPサーバーの制約にあわせて変更しています。
+インターフェースはJSON-RPCをベースにFlashAirのHTTPサーバーの制約にあわせて変更しています。  
+`canarium_rpc.lua` および `crs.lua` はFlashAir側にRPCサーバー機能を提供します。クライアント側は[Canarium RPC Client](crpc_client_doc.md)を参照してください。
+
+<img src="https://raw.githubusercontent.com/osafune/canarium_air/master/img/canarium_stack.png" width="370" height="600">
 
 
 ライセンス
@@ -483,7 +486,7 @@ Qsysモジュール（FPGA内部ロジックコア）のペリフェラルレジ
 ```
 - パラメータ
   - `address`  
-  書き込みアドレスを4バイトで指定します。格納順はネットワークバイトオーダーです。  
+  読み出しアドレスを4バイトで指定します。格納順はネットワークバイトオーダーです。  
   アドレス値は32bitのワード境界に整列していなければなりません。
 
 - 返値

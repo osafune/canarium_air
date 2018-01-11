@@ -318,7 +318,7 @@ var CanariumRPC_Client = function(option) {
     };
 
     // メソッド追加と削除
-    const addmethod = (name, qfunc, pfunc) => {
+    const setmethod = (name, qfunc, pfunc) => {
         if (typeof(name) !== "string" || (qfunc && typeof(qfunc) !== "function")) return false;
 
         if (qfunc) {
@@ -475,8 +475,8 @@ var CanariumRPC_Client = function(option) {
         return crpc_call({ method: "STAT" });
     };
 
-    this.addmethod = addmethod;
-    this.delmethod = (name) => addmethod(name);
+    this.addmethod = setmethod;
+    this.delmethod = (name) => setmethod(name);
     this.call = crpc_call;
 
     this.RPCVER = () =>
@@ -506,8 +506,8 @@ var CanariumRPC_Client = function(option) {
     this.BLOAD = (fname, addr, callback) =>
         crpc_call({ method: "BLOAD", params: { file: fname, address: addr } }, callback);
 
-    this.BSAVE = (fname, fsize, addr, callback) =>
-        crpc_call({ method: "BSAVE", params: { file: fname, size: fsize, address: addr } }, callback);
+    this.BSAVE = (fname, addr, size, callback) =>
+        crpc_call({ method: "BSAVE", params: { file: fname, size: size, address: addr } }, callback);
 
     this.LOAD = (fname, offset, callback) =>
         crpc_call({ method: "LOAD", params: { file: fname, offset: offset } }, callback);
