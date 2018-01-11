@@ -1,10 +1,44 @@
-// Canarium RPC Client
+/*
+------------------------------------------------------------------------------------
+--  Canarium Air RPC Client                                                       --
+------------------------------------------------------------------------------------
+  @author Shun OSAFUNE <s.osafune@j7system.jp>
+  @copyright The MIT License (MIT); (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
 
+  *Version release
+    v0.2.0111   s.osafune@j7system.jp
 
-var Canarium = function(option) {
+  *Requirement Canarium RPC Server version
+    v0.2.0109 or later
+
+------------------------------------------------------------------------------------
+  The MIT License (MIT)
+  Copyright (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy of
+  this software and associated documentation files (the "Software"), to deal in
+  the Software without restriction, including without limitation the rights to
+  use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+  of the Software, and to permit persons to whom the Software is furnished to do
+  so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+------------------------------------------------------------------------------------
+*/
+
+var CanariumRPC_Client = function(option) {
 
     // Canarium RPC Clientのバージョン
-    const crpc_version = "0.2.0108";
+    const crpc_version = "0.2.0111";
 
     // Canarium RPC サーバーのタイムアウト時間（デフォルト180秒）
     const xhr_timeout = 180 * 1000;
@@ -19,8 +53,11 @@ var Canarium = function(option) {
     let cgi_getprogress = "/command.cgi?op=130&ADDR=512&LEN=100";
 
     // デバッグログ出力用
-    let dbg_print = false; //true;
-    const dbg_log = (x) => (dbg_print) ? console.log(x) : null;
+    let dbg_mes_level = 1;
+    const dbg_log = (x, lv) => (dbg_mes_level >= lv) ? console.log(x) : null;
+    dbg_log.info = (x) => dbg_log(x, 1);
+    dbg_log.state = (x) => dbg_log(x, 2);
+    dbg_log.data = (x) => dbg_log(x, 3);
 
 
     //------------------------------------------------------------------------
@@ -61,7 +98,7 @@ var Canarium = function(option) {
 
     // Base64urlのデコード
     const b64dec = (str) => {
-        let res = new Array(); // 速度重視
+        let res = [];
         let p = -8,
             a = 0,
             c;
@@ -150,14 +187,22 @@ var Canarium = function(option) {
         cur_path = res.current_path;
         work_path = cur_path + "work/";
 
-        console.log("Card ID     : 0x" + res.cid);
-        console.log("App-info ID : 0x" + res.appinfo);
-        console.log("CORS Host   : " + cors_host);
-        console.log("RPC Server  : " + rpc_server);
-        console.log("Current path: " + cur_path);
-        console.log("Work path   : " + work_path);
-        console.log("Progress URI: " + cgi_getprogress);
-        console.log("Upload cgi  : " + res.file_upload);
+        let mac_str = "";
+        for (let i = 0; i < 6; i++) {
+            mac_str = mac_str + ((i > 0) ? "-" : "") + res.mac_address.toUpperCase().substr(i * 2, 2);
+        }
+        dbg_log.info(
+            "Card ID     : 0x" + res.cid +
+            "\nCard MAC    : " + mac_str +
+            "\nNetBIOS name: " + res.netname +
+            "\nApp-info ID : " + res.appinfo +
+            "\nFAT timezone: " + res.timezone +
+            "\nCORS Host   : " + cors_host +
+            "\nRPC Server  : " + rpc_server +
+            "\nCurrent path: " + cur_path +
+            "\nWork path   : " + work_path +
+            "\nProgress URI: " + cgi_getprogress
+        );
 
         return res;
     };
@@ -285,7 +330,7 @@ var Canarium = function(option) {
             delete method[name];
         }
 
-        dbg_log(method);
+        dbg_log.data(method);
         return true;
     };
 
@@ -297,8 +342,11 @@ var Canarium = function(option) {
 
         // パラメータのチェックと成形　//
         if (typeof(t.id) === "number") {
-            if (t.id >= 0 && t.id <= 65535) auto_id_number = t.id;
-            else return ERROR_JSON;
+            if (t.id >= 0 && t.id <= 65535) {
+                auto_id_number = t.id;
+            } else {
+                return ERROR_JSON;
+            }
         } else {
             t.id = auto_id_number;
         }
@@ -333,7 +381,7 @@ var Canarium = function(option) {
         });
         bin_arr[3] = xsum;
 
-        dbg_log("packet :" + toHexstr(bin));
+        dbg_log.data("packet :" + toHexstr(bin));
         return b64enc(bin);
     };
 
@@ -366,7 +414,7 @@ var Canarium = function(option) {
             let query = (typeof(t) === "string" && ot.jsonrpc !== "2.0") ? ERROR_JSON : getquery(ot);
 
             if (typeof(query) === "string") {
-                dbg_log("JSON-RPC --> " + query);
+                dbg_log.state("JSON-RPC --> " + query);
 
                 const xhr = new XMLHttpRequest();
                 xhr.open("GET", cors_host + rpc_server + "?" + query);
@@ -383,7 +431,7 @@ var Canarium = function(option) {
                 };
                 xhr.onload = () => {
                     let res = xhr.responseText;
-                    dbg_log("JSON-RPC <-- " + res);
+                    dbg_log.state("JSON-RPC <-- " + res);
 
                     if (typeof(t) !== "string") {
                         res = JSON.parse(res);
@@ -428,7 +476,41 @@ var Canarium = function(option) {
     };
 
     this.addmethod = addmethod;
+    this.delmethod = (name) => addmethod(name);
     this.call = crpc_call;
+
+    this.RPCVER = () =>
+        crpc_call({ method: "VER" });
+
+    this.CHECK = () =>
+        crpc_call({ method: "CHECK" });
+
+    this.IOWR = (addr, data) =>
+        crpc_call({ method: "IOWR", params: { address: addr, data: data } });
+
+    this.IORD = (addr) =>
+        crpc_call({ method: "IORD", params: { address: addr } });
+
+    this.MEMWR = (addr, data) =>
+        crpc_call({ method: "MEMWR", params: { address: addr, data: data } });
+
+    this.MEMRD = (addr, size) =>
+        crpc_call({ method: "MEMRD", params: { address: addr, size: size } });
+
+    this.CONF = (fname, callback) =>
+        crpc_call({ method: "CONF", params: { file: fname } }, callback);
+
+    this.FCONF = (fname, callback) =>
+        crpc_call({ method: "FCONF", params: { file: fname } }, callback);
+
+    this.BLOAD = (fname, addr, callback) =>
+        crpc_call({ method: "BLOAD", params: { file: fname, address: addr } }, callback);
+
+    this.BSAVE = (fname, fsize, addr, callback) =>
+        crpc_call({ method: "BSAVE", params: { file: fname, size: fsize, address: addr } }, callback);
+
+    this.LOAD = (fname, offset, callback) =>
+        crpc_call({ method: "LOAD", params: { file: fname, offset: offset } }, callback);
 
     this.encode = b64enc;
     this.decode = b64dec;

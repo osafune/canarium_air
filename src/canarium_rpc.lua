@@ -6,10 +6,10 @@
   @copyright The MIT License (MIT); (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.2.0108   s.osafune@j7system.jp
+    v0.2.0109   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
-    W4.00.01 or later
+    W4.00.01+
 
   *Requirement Canarium Air version
     v0.2.0101 or later
@@ -51,13 +51,14 @@ local sform = require "string".format
 local concat = require "table".concat
 local rand = require "math".random
 local shdmem = require "fa".sharedmemory
+local sdioreg = require "fa".ReadStatusReg
 local jsonenc = require "cjson".encode
 
 -- モジュールオブジェクト
 cr = {}
 
 -- バージョン
-function cr.version() return "0.2.0108" end
+function cr.version() return "0.2.0109" end
 
 -- デバッグ表示メソッド（必要があれば外部で定義する）
 function cr.dbgprint(...) end
@@ -206,6 +207,9 @@ local _get_faconfig = function()
     if k ~= nil and v ~= nil then conf[k] = v end
   end
 
+  local reg = sdioreg()
+  conf["MAC_ADDRESS"] = reg:sub((0x530 - 0x500) * 2 + 1, (0x530 - 0x500 + 6) * 2)
+
   return conf;
 end
 
@@ -263,7 +267,9 @@ local _do_status = function(cstr)
     file_upload = (config["UPLOAD"] == "1"),
     cid = config["CID"],
     appinfo = config["APPINFO"],
-    mastercode = config["MASTERCODE"]
+    netname = config["APPNAME"] or "flashair",
+    mac_address = config["MAC_ADDRESS"],
+    timezone = tonumber(config["TIMEZONE"], 10) or 0
   }
 end
 
@@ -480,8 +486,9 @@ function cr.update(...)
   s = prog_txt .. s .. "]}\x00"
 
   shdmem("write", smem_begin, #s, s)
+  if #s > smem_length then smem_length = #s end
   --[[
-  local str = shdmem("read", smem_begin, 100)
+  local str = shdmem("read", smem_begin, smem_length)
   cr.dbgprint("> shdmem : "..str)
   --]]
 end

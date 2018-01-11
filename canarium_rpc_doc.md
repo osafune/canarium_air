@@ -386,9 +386,12 @@ STATクエリ
   RPCサーバーやFlashAirの情報 *object* で返します。
     - `current_path` : RPCサーバーのカレントパスが *string* で入ります。
     - `absolute_access` : RPCサーバーで絶対パスでのアクセスの可否が *boolean* で入ります。
-    - `file_upload` : upload.cgiが有効かどうかが *boolean* で入ります。
+    - `file_upload` : ファイルアップロードが有効かどうかが *boolean* で入ります。
     - `cid` : FlashAirのカードユニークIDが *string* で入ります。
-    - `appinfo` : FlashAirで設定したAPPINFO番号があれば *string* で入ります。
+    - `mac_address` : FlashAirのMACアドレスが *string* で入ります。
+    - `netname` : FlashAirのネット識別名が *string* で入ります。
+    - `appinfo` : FlashAirで設定したAPPINFOがあればその文字列が *string* で入ります。
+    - `timezone` : FlashAirで設定したタイムゾーンの値が *number* で入ります。
 
 
 ---
