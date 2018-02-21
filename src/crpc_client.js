@@ -6,10 +6,10 @@
   @copyright The MIT License (MIT); (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.2.0111   s.osafune@j7system.jp
+    v0.2.0219   s.osafune@j7system.jp
 
   *Requirement Canarium RPC Server version
-    v0.2.0109 or later
+    v0.2.0219 or later
 
 ------------------------------------------------------------------------------------
   The MIT License (MIT)
@@ -38,7 +38,7 @@
 var CanariumRPC_Client = function(option) {
 
     // Canarium RPC Clientのバージョン
-    const crpc_version = "0.2.0111";
+    const crpc_version = "0.2.0219";
 
     // Canarium RPC サーバーのタイムアウト時間（デフォルト180秒）
     const xhr_timeout = 180 * 1000;
@@ -64,7 +64,7 @@ var CanariumRPC_Client = function(option) {
     // Base64url function
     //------------------------------------------------------------------------
 
-    // Base54url 変換テーブル
+    // Base64url 変換テーブル
     const base64url_list = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
     // Base64urlのエンコード
@@ -414,10 +414,11 @@ var CanariumRPC_Client = function(option) {
             let query = (typeof(t) === "string" && ot.jsonrpc !== "2.0") ? ERROR_JSON : getquery(ot);
 
             if (typeof(query) === "string") {
+                if (query !== "") query = "?" + query;
                 dbg_log.state("JSON-RPC --> " + query);
 
                 const xhr = new XMLHttpRequest();
-                xhr.open("GET", cors_host + rpc_server + "?" + query);
+                xhr.open("GET", cors_host + rpc_server + query);
                 xhr.timeout = xhr_timeout;
                 xhr.ontimeout = () => {
                     console.error("RPC call timed out.");

@@ -50,13 +50,13 @@ Luaスクリプトを使って自動的なセットアップやバッチ処理�
 Canarium RPC Client
 -------------------
 
-- [Cabarium RPC Client v0.2.0111](crpc_client_doc.md)
+- [Cabarium RPC Client v0.2.0219](crpc_client_doc.md)
 
 
 Canarium RPC Server
 -------------------
 
-- [Canarium RPC Server v0.2.0109](canarium_rpc_doc.md)
+- [Canarium RPC Server v0.2.0221](canarium_rpc_doc.md)
 
 
 Canarium Air I/O

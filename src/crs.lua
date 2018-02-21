@@ -6,7 +6,7 @@
 @copyright The MIT License (MIT); (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.2.0111   s.osafune@j7system.jp
+    v0.2.0221   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
     W4.00.01+
@@ -24,7 +24,7 @@ require "/crpc/canarium_rpc"
 --cr.setpath("/foo/bar")
 
 do
-  print("HTTP/1.1 200 OK\nAccess-Control-Allow-Origin: *\nContent-Type: application/json; charset=utf-8")
+  print("HTTP/1.1 200 OK\nAccess-Control-Allow-Origin: *\nConnection: close\nContent-Type: application/json; charset=utf-8")
 
   local json_str = cr.parse(arg[1])
 

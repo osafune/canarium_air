@@ -6,7 +6,7 @@
   @copyright The MIT License (MIT); (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.2.0109   s.osafune@j7system.jp
+    v0.2.0221   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
     W4.00.01+
@@ -58,7 +58,7 @@ local jsonenc = require "cjson".encode
 cr = {}
 
 -- バージョン
-function cr.version() return "0.2.0109" end
+function cr.version() return "0.2.0219" end
 
 -- デバッグ表示メソッド（必要があれば外部で定義する）
 function cr.dbgprint(...) end
@@ -514,7 +514,7 @@ end
 -- メソッドのパース
 function cr.parse(query)
   local _do_method = function(q)
-    if not q or #q <= 1 then return _do_version() end
+    if not q then return _do_version() end
 
     local rp = cr.b64dec(q)
 

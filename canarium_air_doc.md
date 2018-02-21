@@ -75,33 +75,38 @@ avm:close()
 関数リファレンス
 ==============
 
-ca.version()
-------------
+ca.version
+----------
 
 ライブラリのバージョンを取得します。
 
-- 書式例
+- 書式  
+*string* ca.version()
+
+- 記述例
 ```Lua
 ver = ca.version()
 ```
 
-- 引数
-
+- 引数  
 なし
 
 - 返値
   - `ver`  
-  バージョンが *string* で返ります。
+  バージョン表記が *string* で返ります。
 
 
 ---
-ca.progress(*`funcname`*, *`...`*)
-----------------------------------
+ca.progress
+-----------
 
 時間のかかる処理の際に、内部で進捗度を取得するために呼ばれます。  
 この関数で進捗度を得るためにはユーザープログラム側で上書きする必要があります。
 
-- 書式例
+- 書式  
+ca.progress( *string* `funcname`, *number* `...` )
+
+- 記述例
 ```Lua
 require "canarium_air"
 
@@ -117,17 +122,23 @@ end
   - `...`  
   進捗度が *number* で格納されます。値の範囲は `0` ~ `100` です。
 
+- 返値  
+なし
+
 複数の処理ステージが存在する関数の場合、ステージ数分の引数が渡されることに注意してください。
 
 
 -----
-ca.config(*`table`*)
---------------------
+ca.config
+---------
 
 FPGAのコンフィグレーションを行います。
 この関数は内部で `ca.progress("config", prog1, prog2)` を呼び出します。*prog1* はキャッシュファイル作成の進捗度、*prog2* はFPGAコンフィグレーションの進捗度を返します。
 
-- 書式例
+- 書式  
+*boolean*,*string* ca.config( *table* `table` )
+
+- 記述例
 ```Lua
 res,mes = ca.config{file="/foo/bar.rbf"}
 ```
@@ -148,12 +159,15 @@ res,mes = ca.config{file="/foo/bar.rbf"}
 
 
 ----
-ca.open( [*`table`*] )
-----------------------
+ca.open
+-------
 
 Qsysモジュールへのアクセスオブジェクトを取得します。
 
-- 書式例
+- 書式  
+*table*,*string* ca.open( [*table* `table`] )
+
+- 記述例
 ```Lua
 avm,mes = ca.open()
 ```
@@ -174,12 +188,15 @@ avm,mes = ca.open()
 
 
 ---
-*avm*:close()
--------------
+*avm*:close
+-----------
 
 取得したアクセスオブジェクトを破棄し、クローズ処理を行います。
 
-- 書式例
+- 書式  
+*avm*:close()
+
+- 記述例
 ```Lua
 avm,mes = ca.open()
   :
@@ -187,19 +204,24 @@ avm,mes = ca.open()
 avm:close()
 ```
 
-- 返値
+- 引数  
+なし
 
-    なし
+- 返値  
+なし
 
 
 ----
-*avm*:iord(*`addr`*)
---------------------
+*avm*:iord
+----------
 
 取得したアクセスオブジェクトでI/Oリードを行います。  
 Qsys内部のアクセスは必ずバス幅(32bit単位)で行われ、ワード内でのアトミックな読み出しを保証します。
 
-- 書式例
+- 書式  
+*number*,*string* *avm*:iord( *number* `addr` )
+
+- 記述例
 ```Lua
 avm = ca.open()
 data,mes = avm:iord(0x10000000)
@@ -218,13 +240,16 @@ data,mes = avm:iord(0x10000000)
 
 
 ----
-*avm*:iowr(*`addr`*, *`data`*)
-------------------------------
+*avm*:iowr
+----------
 
 取得したアクセスオブジェクトでI/Oライトを行います。  
 Qsys内部のアクセスは必ずバス幅(32bit単位)で行われ、ワード内でのアトミックな書き込みを保証します。
 
-- 書式例
+- 書式  
+*boolean*,*string* *avm*:iowr( *number* `addr`, *number* `data` )
+
+- 記述例
 ```Lua
 avm = ca.open()
 res,mes = avm:iowr(0x10000000, 1)
@@ -246,12 +271,15 @@ res,mes = avm:iowr(0x10000000, 1)
 
 
 ----
-*avm*:memrd(*`addr`*, *`size`*)
--------------------------------
+*avm*:memrd
+-----------
 
 取得したアクセスオブジェクトでメモリリードを行います。  
 
-- 書式例
+- 書式  
+*string*,*string* *avm*:memrd( *number* `addr`, *number* `size` )
+
+-記述例
 ```Lua
 avm = ca.open()
 rstr,mes = avm:memrd(0x10000000, 256)
@@ -273,12 +301,15 @@ rstr,mes = avm:memrd(0x10000000, 256)
 
 
 ---
-*avm*:memwr(*`addr`*, *`wstr`*)
--------------------------------
+*avm*:memwr
+-----------
 
 取得したアクセスオブジェクトでメモリライトを行います。
 
-- 書式例
+- 書式  
+*boolean*,*string* *avm*:memwr( *number* `addr`, *string* `wstr` )
+
+- 記述例
 ```Lua
 avm = ca.open()
 res,mes = avm:iowr(0x10000000, "\x01\x02\x03\x04\x05\x06")
@@ -300,13 +331,16 @@ res,mes = avm:iowr(0x10000000, "\x01\x02\x03\x04\x05\x06")
 
 
 ---
-ca.binload(*`avm`*, *`file`*, [*`addr`*] )
-------------------------------------------
+ca.binload
+----------
 
 取得したアクセスオブジェクトのメモリ空間にファイルイメージをロードします。  
 この関数は内部で `ca.progress("binload", prog)` を呼び出します。
 
-- 書式例
+- 書式  
+*boolean*,*string* ca.binload( *table* `avm`, *string* `file` [, *number* `addr`] )
+
+- 記述例
 ```Lua
 avm = ca.open()
 res,mes = ca.binload(avm, "/foo/bar.bin", 0x2000)
@@ -337,13 +371,16 @@ res,mes = avm:bload("/foo/bar.bin", 0x2000)
 
 
 ---
-ca.binsave(*`avm`*, *`file`*, *`size`*, [*`addr`*] )
-----------------------------------------------------
+ca.binsave
+----------
 
 取得したアクセスオブジェクトのメモリ空間からバイトイメージをファイルにセーブします。  
 この関数は内部で `ca.progress("binsave", prog)` を呼び出します。
 
-- 書式例
+- 書式  
+*boolean*,*string* ca.binsave( *table* `avm`, *string* `file`, *number* `size` [, *number* `addr`] )
+
+- 記述例
 ```Lua
 avm = ca.open()
 res,mes = ca.binsave(avm, "/foo/bar.bin", 8192, 0x1000)
@@ -377,13 +414,16 @@ res,mes = avm:bsave("/foo/bar.bin", 8192, 0x1000)
 
 
 ---
-ca.hexload(*`avm`*, *`file`*, [*`offset`*] )
---------------------------------------------
+ca.hexload
+----------
 
 取得したアクセスオブジェクトのメモリ空間にIntelHEXまたはS-record形式のファイルをロードします。  
 この関数は内部で `ca.progress("hexload", prog)` を呼び出します。
 
-- 書式例
+- 書式  
+*boolean*,*string* ca.hexload( *table* `avm`, *string* `file` [, *number* `offset`] )
+
+- 記述例
 ```Lua
 avm = ca.open()
 res,mes = ca.hexload(avm, "/foo/bar.hex")

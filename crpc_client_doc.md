@@ -59,12 +59,15 @@ fpga_config();
 APIリファレンス
 ==============
 
-*string* CanariumRPC_Client.version()
+CanariumRPC_Client.version
 -------------------------------------
 
 Canarium RPC Clientのバージョンを取得します。
 
-- 書式例
+- 書式  
+*string* CanariumRPC_Client.version()
+
+- 記述例
 ```javascript
 let ver = crpc.version();
 ```
@@ -79,12 +82,15 @@ let ver = crpc.version();
 
 
 ---
-*boolean* CanariumRPC_Client.addmethod(*string `name`*, *function `qfunc`* [, *function `pfunc`*] )
+CanariumRPC_Client.addmethod
 ---------------------------------------------------------------------------------------------------
 
 RPCサーバー側に追加したユーザーメソッドに対応するクエリを発行するRPCメソッドの追加を行います。 
 
-- 書式例
+- 書式  
+*boolean* CanariumRPC_Client.addmethod(*string `name`*, *function `qfunc`* [, *function `pfunc`*] )
+
+- 記述例
 ```javascript
 let res = crpc.addmethod("USER", (params) => {
   let p = [];
@@ -113,12 +119,15 @@ let res = crpc.addmethod("USER", (params) => {
 
 
 ---
-*boolean* CanariumRPC_Client.delmethod(*string `name`*)
+CanariumRPC_Client.delmethod
 -------------------------------------------------------
 
 `CanariumRPC_Client.addmethod()` で追加したRPCメソッドの削除を行います。 
 
-- 書式例
+- 書式  
+*boolean* CanariumRPC_Client.delmethod(*string `name`*)
+
+- 記述例
 ```javascript
 let res = crpc.delmethod("USER");
 ```
@@ -133,12 +142,15 @@ let res = crpc.delmethod("USER");
 
 
 ---
-*string* CanariumRPC_Client.encode(*ArrayBuffer `bin`*)
+CanariumRPC_Client.encode
 -------------------------------------------------------
 
 バイナリデータをBase64Urlでエンコードします。
 
-- 書式例
+- 書式  
+*string* CanariumRPC_Client.encode(*ArrayBuffer `bin`*)
+
+- 記述例
 ```javascript
 let b64_str = crpc.encode(bin);
 ```
@@ -153,12 +165,15 @@ let b64_str = crpc.encode(bin);
 
 
 ---
-*ArrayBuffer* CanariumRPC_Client.decode(*string `b64_str`*)
+CanariumRPC_Client.decode
 -----------------------------------------------------------
 
 Base64Urlでエンコードされた文字列をバイナリデータへ復元します。
 
-- 書式例
+- 書式  
+*ArrayBuffer* CanariumRPC_Client.decode(*string `b64_str`*)
+
+- 記述例
 ```javascript
 let bin = crpc.decode(b64_str);
 ```
@@ -173,13 +188,16 @@ let bin = crpc.decode(b64_str);
 
 
 ---
-*Promise* CanariumRPC_Client.settings(*string `host`*, *string `server`*)
+CanariumRPC_Client.settings
 -------------------------------------------------------------------------
 
 RPCサーバーのホストや場所を指定します。  
 このメソッドが呼ばれると、Canarium RPCクライアントはサーバーへの接続を試み、クライアント設定を自動的に行います。
 
-- 書式例
+- 書式  
+*Promise* CanariumRPC_Client.settings(*string `host`*, *string `server`*)
+
+- 記述例
 ```javascript
 let res = await crpc.settings("", "/crs.lua");
 ```
@@ -199,12 +217,15 @@ let res = await crpc.settings("", "/crs.lua");
 
 
 ---
-*Promise* CanariumRPC_Client.call(*object `jsonrpc`* [, *function `callback`* [, *number `period`* ]])
+CanariumRPC_Client.call
 ------------------------------------------------------------------------------------------------------
 
 RPCサーバーに対してメソッドを発行します。
 
-- 書式例
+- 書式  
+*Promise* CanariumRPC_Client.call(*object `jsonrpc`* [, *function `callback`* [, *number `period`* ]])
+
+- 記述例
 ```javascript
 let res = await crpc.call({
   method: "CONF",
@@ -348,7 +369,7 @@ RPCサーバーのバージョンを取得します。
 - シンタクスシュガー  
 *Promise* `CanariumRPC_Client.RPCVER()`
 
-- リクエストプロパティ
+- リクエストプロパティ  
   なし
 
 - レスポンスプロパティ
@@ -386,6 +407,7 @@ FPGAがコンフィグレーション済みかどうかをチェックします�
   FPGAの状態を *number* で返します。
     - `1` : コンフィグレーションされている
     - `0` : 未コンフィグレーション状態
+    - 上記以外 : 予約
 
 
 ---
