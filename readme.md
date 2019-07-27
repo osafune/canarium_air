@@ -41,7 +41,7 @@ Luaスクリプトを使って自動的なセットアップやバッチ処理�
 - ターゲットとするユーザー
   - Intel FPGAのプロジェクトビルドおよび、Intel FPGAハードウェア設計の経験がある人
   - FlashAirを使ったハードウェアを作った経験のある人
-  - プログラミング言語としてLuaが使える人
+  - プログラミング言語としてLuaやJavaScriptが使える人
 
 
 ドキュメントなど
@@ -50,7 +50,7 @@ Luaスクリプトを使って自動的なセットアップやバッチ処理�
 Canarium RPC Client
 -------------------
 
-- [Cabarium RPC Client v0.2.0219](crpc_client_doc.md)
+- [Cabarium RPC Client v0.3.0726](crpc_client_doc.md)
 
 
 Canarium RPC Server
