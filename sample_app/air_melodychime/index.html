@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" href="img/logo_favicon_16x16.ico">
+    <style type="text/css">
+        body {
+            margin: 10px;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Yu Gothic", YuGothic, "ヒラギノ角ゴ ProN W3", Hiragino Kaku Gothic ProN, Arial, "メイリオ", Meiryo, sans-serif;
+            color: #202020;
+        }
+        
+        h1 {
+            font-size: 140%;
+            color: #006b6b;
+            text-shadow: 3px 3px 5px #d0d0d0;
+        }
+        
+        h2 {
+            font-size: 120%;
+            color: #006b6b;
+            text-shadow: 3px 3px 5px #d0d0d0;
+        }
+        
+        h3 {
+            font-size: 100%;
+            color: #4c4c4c;
+        }
+        
+        img {
+            border: none;
+        }
+    </style>
+
+    <script type="text/javascript" src="./lib/crpc_client.js"></script>
+
+    <title>メロディチャイムのサンプル</title>
+</head>
+
+<body>
+    <div class="toolheader">
+        <img src="img/peridotcraft_banner.png" width=162 height=50 align=right />
+        <h1>Melody Chime</h1>
+        <br style="clear:both;" />
+    </div>
+
+    <div class="toolbody" style="text-align: center;">
+        <img id="chime_icon" src="img/ic_loading_80x80.gif" width="80" height="80" /><br />
+        <span id="card_info">Initializing...</span>
+        <br />
+    </div>
+
+    <div class="toolfooter">
+        <small>&copy;2017-2019 J-7SYSTEM WORKS LIMITED.</small>
+    </div>
+
+    <script>
+        // ロード時の初期化 
+        const crpc = new CanariumRPC_Client();
+        const board_init = async() => {
+            console.log("CLIENT code : crpc_client.js ver " + crpc.version());
+
+            let res = await crpc.settings("", "/app/crs.lua");
+            if (!res.result) {
+                console.error("error :", res.error);
+                return null;
+            }
+
+            res = await crpc.RPCVER();
+            if (!res.result) {
+                console.error("error :", res.error);
+                return null;
+            }
+            console.log(
+                "RPC_VERSION : " + res.result.rpc_version +
+                "\nLIB_VERSION : " + res.result.lib_version +
+                "\nFA_VERSION  : " + res.result.fa_version);
+
+            res = await crpc.CONF(
+                "rbf/air_melodychime_top.rbf",
+                (id, res) => console.log("ID:" + id + ", Progress = " + ((res.progress[0] + res.progress[1]) >> 1) + "%"));
+            if (!res.result) {
+                console.error("error :", res.error);
+                return null;
+            }
+            console.log("FPGA configured");
+
+            res = await crpc.IORD(0x10000000);
+            if (!res.result) {
+                console.error("error :", res.error);
+                return null;
+            }
+            let systemid = ("0000000" + res.result.toString(16).toUpperCase()).substr(-8);
+            console.log("systemid = 0x" + systemid);
+
+            res = await crpc.IORD(0x10000004);
+            if (!res.result) {
+                console.error("error :", res.error);
+                return null;
+            }
+            let ut = new Date();
+            ut.setTime(res.result * 1000);
+            let timecode = res.result;
+            let timestring = ut.toString();
+            console.log("timecode = " + timecode + " (" + timestring + ")");
+            console.log("ok");
+
+            res = await crpc.IOWR(0x10000100, 1);
+
+            return {
+                systemid: systemid,
+                timecode: timecode,
+                timestring: timestring
+            };
+        };
+
+        window.onload = async() => {
+            let icon = document.getElementById("chime_icon");
+            let info = document.getElementById("card_info");
+
+            let res = await board_init();
+            if (!res) {
+                icon.setAttribute("src", "img/ic_error_80x80.png");
+                info.innerHTML = "Board configuration failed.<br>";
+                return;
+            }
+
+            icon.setAttribute("src", "img/music_icon_128x128.png");
+            info.innerHTML = "SystemID : 0x" + res.systemid + "<br>Timecode : " + res.timecode + "<br>";
+
+            icon.addEventListener("click", () => crpc.IOWR(0x10000110, 1), false);
+        };
+    </script>
+
+</body>
+
+</html>
