@@ -4,13 +4,13 @@
 --    PERIDOT-AIR configuration & Avalon-MM access library                        --
 ------------------------------------------------------------------------------------
   @author Shun OSAFUNE <s.osafune@j7system.jp>
-  @copyright The MIT License (MIT); (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
+  @copyright The MIT License (MIT); (c) 2017-2019 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.2.0101   s.osafune@j7system.jp (W4.01.00 evaluation)
+    v0.3.0726   s.osafune@j7system.jp (W4.00.03)
 
   *Requirement FlashAir firmware version
-    W4.00.01+
+    W4.00.03+
 
   *FlashAir I/O connection
     CMD  <---> DATA0(SCL)
@@ -22,7 +22,7 @@
 
 ------------------------------------------------------------------------------------
 -- The MIT License (MIT)
--- Copyright (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
+-- Copyright (c) 2017-2019 J-7SYSTEM WORKS LIMITED.
 --
 -- Permission is hereby granted, free of charge, to any person obtaining a copy of
 -- this software and associated documentation files (the "Software"), to deal in
@@ -61,16 +61,13 @@ local concat = require "table".concat
 ca = {}
 
 -- バージョン
-function ca.version() return "0.2.0101" end
+function ca.version() return "0.3.0726" end
 
 -- 進捗表示（必要な場合は外部で定義する）
 function ca.progress(funcname, ...) end
 
 -- fa.i2cの正常レスポンス
---<Measures for W4.00.01>--
-local _r_OK = "OK\n"
---]]
---[[ --<Measures for W4.01.00>--
+--<Measures for W4.00.03>--
 local _r_OK = "OK"
 --]]
 
@@ -106,14 +103,7 @@ local _devopen = function(avm, addr)
   end
 
   res = true
-  --<Measures for W4.00.01>--
-  local t = {mode="write", data=0}
-  for i=avm.addrbst,0,-8 do
-    t.data = extract(addr, i, 8)
-    if i2c(t) ~= _r_OK then res = false; break end
-  end
-  --]]
-  --[[ --<Measures for W4.01.00>--
+  --<Measures for W4.00.03>--
   local s = ""
   for i=avm.addrbst,0,-8 do s = s .. schar(extract(addr, i, 8)) end
   if i2c{mode="write", data=s} ~= _r_OK then res = false end
@@ -161,14 +151,7 @@ local _avm_iowr = function(self, addr, wdat)
 
   local res,mes = _devopen(self, addr)
   if not res then return nil,mes end
-  --<Measures for W4.00.01>--
-  local t = {mode="write", data=0}
-  for i=0,24,8 do
-    t.data = extract(wdat, i, 8)
-    if i2c(t) ~= _r_OK then res = false; break end
-  end
-  --]]
-  --[[ --<Measures for W4.01.00>--
+  --<Measures for W4.00.03>--
   local t = {mode="write", data=schar(extract(wdat,0,8), extract(wdat,8,8), extract(wdat,16,8), extract(wdat,24,8))}
   if i2c(t) ~= _r_OK then res = false end
   --]]
@@ -185,15 +168,7 @@ local _avm_memrd = function(self, addr, size)
   if size < 1 then return "" end
 
   local t_stop = {mode="stop"}
-  --<Measures for W4.00.01>--
-  local t_read = {mode="read", bytes=0, type="binary"}
-  local _strread = function(r, ...)
-    i2c(t_stop)
-    if r ~= _r_OK then return nil,"memory read error" end
-    return schar(...)
-  end
-  --]]
-  --[[ --<Measures for W4.01.00>--
+  --<Measures for W4.00.03>--
   local t_read = {mode="read", bytes=0, type="string"}
   --]]
 
@@ -213,11 +188,7 @@ local _avm_memrd = function(self, addr, size)
     local len = size
     if len > self.rdsplit then len = self.rdsplit end
     t_read.bytes = len
-    --<Measures for W4.00.01>--
-    res,mes = _strread(i2c(t_read))
-    if not res then break end
-    --]]
-    --[[ --<Measures for W4.01.00>--
+    --<Measures for W4.00.03>--
     mes,res = i2c(t_read)
     i2c(t_stop)
     if mes ~= _r_OK then
@@ -258,13 +229,7 @@ local _avm_memwr = function(self, addr, wstr)
     local r,m = _devopen(self, a)
     if not r then return nil,m end
 
-    --<Measures for W4.00.01>--
-    for i=1,#s do
-      t_write.data = s:byte(i)
-      if i2c(t_write) ~= _r_OK then r = nil; break end
-    end
-    --]]
-    --[[ --<Measures for W4.01.00>--
+    --<Measures for W4.00.03>--
     t_write.data = s
     if i2c(t_write) ~= _r_OK then r = nil end
     --]]
@@ -379,7 +344,7 @@ function ca.open(t)
       --<Measures for W4.00.01>--
       i2cfreq = freq,
       --]]
-      --[[ --<Measures for W4.01.00>--
+      --[[ --<Measures for W4.00.03?>--
       i2cfreq = freq .. "",
       --]]
       addrbst = (adb - 1) * 8,
@@ -514,10 +479,7 @@ function ca.config(t)
     while true do
       local ln = f:read(256)
       if not ln then break end
-      --<Measures for W4.00.01>--
-      spi("write", {ln:byte(1, -1)})
-      --]]
-      --[[ --<Measures for W4.01.00>--
+      --<Measures for W4.00.03>--
       spi("write", ln)
       --]]
 

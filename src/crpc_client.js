@@ -6,10 +6,10 @@
   @copyright The MIT License (MIT); (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.2.0219   s.osafune@j7system.jp
+    v0.2.0221   s.osafune@j7system.jp
 
   *Requirement Canarium RPC Server version
-    v0.2.0219 or later
+    v0.2.0221 or later
 
 ------------------------------------------------------------------------------------
   The MIT License (MIT)
@@ -38,7 +38,7 @@
 var CanariumRPC_Client = function(option) {
 
     // Canarium RPC Clientのバージョン
-    const crpc_version = "0.2.0219";
+    const crpc_version = "0.2.0221";
 
     // Canarium RPC サーバーのタイムアウト時間（デフォルト180秒）
     const xhr_timeout = 180 * 1000;
@@ -194,6 +194,8 @@ var CanariumRPC_Client = function(option) {
         dbg_log.info(
             "Card ID     : 0x" + res.cid +
             "\nCard MAC    : " + mac_str +
+            "\nIP address  : " + res.ip_address +
+            "\nSubnet mask : " + res.ip_mask +
             "\nNetBIOS name: " + res.netname +
             "\nApp-info ID : " + res.appinfo +
             "\nFAT timezone: " + res.timezone +

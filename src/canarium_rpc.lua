@@ -3,20 +3,20 @@
 --  Canarium Air RPC Server module                                                --
 ------------------------------------------------------------------------------------
   @author Shun OSAFUNE <s.osafune@j7system.jp>
-  @copyright The MIT License (MIT); (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
+  @copyright The MIT License (MIT); (c) 2017-2019 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.2.0221   s.osafune@j7system.jp
+    v0.3.0726   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
-    W4.00.01+
+    W4.00.03+
 
   *Requirement Canarium Air version
-    v0.2.0101 or later
+    v0.3.0726 or later
 
 ------------------------------------------------------------------------------------
 -- The MIT License (MIT)
--- Copyright (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
+-- Copyright (c) 2017-2019 J-7SYSTEM WORKS LIMITED.
 --
 -- Permission is hereby granted, free of charge, to any person obtaining a copy of
 -- this software and associated documentation files (the "Software"), to deal in
@@ -58,7 +58,7 @@ local jsonenc = require "cjson".encode
 cr = {}
 
 -- バージョン
-function cr.version() return "0.2.0219" end
+function cr.version() return "0.3.0726" end
 
 -- デバッグ表示メソッド（必要があれば外部で定義する）
 function cr.dbgprint(...) end
@@ -210,6 +210,11 @@ local _get_faconfig = function()
   local reg = sdioreg()
   conf["MAC_ADDRESS"] = reg:sub((0x530 - 0x500) * 2 + 1, (0x530 - 0x500 + 6) * 2)
 
+  local ip,mask,gw = fa.ip();
+  conf["IP_ADDRESS"] = ip;
+  conf["IP_MASK"] = mask;
+  conf["IP_GATEWAY"] = gw;
+
   return conf;
 end
 
@@ -269,6 +274,9 @@ local _do_status = function(cstr)
     appinfo = config["APPINFO"],
     netname = config["APPNAME"] or "flashair",
     mac_address = config["MAC_ADDRESS"],
+    ip_address = config["IP_ADDRESS"],
+    ip_mask = config["IP_MASK"],
+    ip_gateway = config["IP_GATEWAY"],
     timezone = tonumber(config["TIMEZONE"], 10) or 0
   }
 end

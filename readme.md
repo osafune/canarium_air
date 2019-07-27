@@ -34,9 +34,9 @@ Luaスクリプトを使って自動的なセットアップやバッチ処理�
 
 ※ 現状はお試しバージョンです。ライブラリの構成やインターフェース等は**予告なく変更される**ことがあります。
 
-- FlashAir W-04 ファームW4.00.01+
+- FlashAir W-04 ファーム W4.00.03 以降
 - Intel FPGA (CycloneIV E, Cyclone10 LP, MAX10)
-- QuartusPrime 17.0以降
+- QuartusPrime 17.1 以降
 
 - ターゲットとするユーザー
   - Intel FPGAのプロジェクトビルドおよび、Intel FPGAハードウェア設計の経験がある人
@@ -56,17 +56,17 @@ Canarium RPC Client
 Canarium RPC Server
 -------------------
 
-- [Canarium RPC Server v0.2.0221](canarium_rpc_doc.md)
+- [Canarium RPC Server v0.3.0726](canarium_rpc_doc.md)
 
 
 Canarium Air I/O
 ----------------
 
-- [Canarium Air I/O v0.2.0101](canarium_air_doc.md)
+- [Canarium Air I/O v0.3.0726](canarium_air_doc.md)
 
 
 ライセンス
 =========
 
 [The MIT License (MIT)](https://opensource.org/licenses/MIT)  
-Copyright (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
+Copyright (c) 2017-2019 J-7SYSTEM WORKS LIMITED.

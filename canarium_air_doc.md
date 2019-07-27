@@ -9,15 +9,15 @@ Canarium Air I/OはFlashAirからFPGAのコンフィグレーションおよび�
 =========
 
 [The MIT License (MIT)](https://opensource.org/licenses/MIT)  
-Copyright (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
+Copyright (c) 2017-2019 J-7SYSTEM WORKS LIMITED.
 
 
 対象環境
 =======
 
-- FlashAir W-04 ファームW4.00.01以降
+- FlashAir W-04 ファーム W4.00.03 以降
 - Intel FPGA (CycloneIV E, Cyclone10 LP, MAX10)
-- QuartusPrime 17.0以降
+- QuartusPrime 17.1 以降
 
 
 使い方
@@ -312,7 +312,7 @@ rstr,mes = avm:memrd(0x10000000, 256)
 - 記述例
 ```Lua
 avm = ca.open()
-res,mes = avm:iowr(0x10000000, "\x01\x02\x03\x04\x05\x06")
+res,mes = avm:memwr(0x10000000, "\x01\x02\x03\x04\x05\x06")
 ```
 
 - 引数
@@ -456,4 +456,4 @@ res,mes = avm:load("/foo/bar.hex")
 
 ---
 
-&copy; 2017,2018 J-7SYSTEM WORKS LIMITED
+&copy; 2017-2019 J-7SYSTEM WORKS LIMITED

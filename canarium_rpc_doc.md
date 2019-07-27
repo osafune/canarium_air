@@ -12,14 +12,14 @@ Canarium RPCはFlashAirを使ってFPGAリソースへのアクセスを提供�
 ==========
 
 [The MIT License (MIT)](https://opensource.org/licenses/MIT)  
-Copyright (c) 2017,2018 J-7SYSTEM WORKS LIMITED.
+Copyright (c) 2017-2019 J-7SYSTEM WORKS LIMITED.
 
 
 対象環境
 ========
 
-- FlashAir W-04 ファームW4.00.01以降
-- Canarium Air I/O v0.2.0101以降
+- FlashAir W-04 ファーム W4.00.03 以降
+- Canarium Air I/O v0.3.0726 以降
 
 
 使い方
@@ -655,7 +655,7 @@ Qsysモジュール（FPGA内部ロジックコア）のメモリアドレス空
 ```
 
 - レスポンス  
-JSON形式で下記のようにデータが返ります。
+JSON形式で下記のようにデータが返ります。CGIの仕様上、JSONデータの最後に `\00` のヌルバイト（文字列終了識別バイト）＋文字長（LENで指定する値）までのパディングデータが付加されることに注意してください。
 
 ```
 {
@@ -663,7 +663,7 @@ JSON形式で下記のようにデータが返ります。
   "id" : <number>,
   "cmd" : <number>,
   "progress": [<number>, <number>, ...]
-}
+}\00<指定データ数までのパディングデータ>
 ```
 
 - 返値プロパティ
@@ -685,4 +685,4 @@ JSON形式で下記のようにデータが返ります。
 
 ---
 
-&copy; 2017,2018 J-7SYSTEM WORKS LIMITED
+&copy; 2017-2019 J-7SYSTEM WORKS LIMITED
