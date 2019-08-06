@@ -7,7 +7,7 @@
   @copyright The MIT License (MIT); (c) 2017-2019 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.3.0726   s.osafune@j7system.jp (W4.00.03)
+    v0.3.0806   s.osafune@j7system.jp (W4.00.03+)
 
   *Requirement FlashAir firmware version
     W4.00.03+
@@ -60,14 +60,15 @@ local concat = require "table".concat
 -- モジュールオブジェクト
 ca = {}
 
--- バージョン
-function ca.version() return "0.3.0726" end
+-- バージョンとコピーライト
+function ca.version() return "0.3.0806" end
+function ca.copyright() return "(c)2017-2019 J-7SYSTEM WORKS LIMITED." end
 
 -- 進捗表示（必要な場合は外部で定義する）
 function ca.progress(funcname, ...) end
 
 -- fa.i2cの正常レスポンス
---<Measures for W4.00.03>--
+--<Measures for W4.00.03+>--
 local _r_OK = "OK"
 --]]
 
@@ -103,7 +104,7 @@ local _devopen = function(avm, addr)
   end
 
   res = true
-  --<Measures for W4.00.03>--
+  --<Measures for W4.00.03+>--
   local s = ""
   for i=avm.addrbst,0,-8 do s = s .. schar(extract(addr, i, 8)) end
   if i2c{mode="write", data=s} ~= _r_OK then res = false end
@@ -151,7 +152,7 @@ local _avm_iowr = function(self, addr, wdat)
 
   local res,mes = _devopen(self, addr)
   if not res then return nil,mes end
-  --<Measures for W4.00.03>--
+  --<Measures for W4.00.03+>--
   local t = {mode="write", data=schar(extract(wdat,0,8), extract(wdat,8,8), extract(wdat,16,8), extract(wdat,24,8))}
   if i2c(t) ~= _r_OK then res = false end
   --]]
@@ -168,7 +169,7 @@ local _avm_memrd = function(self, addr, size)
   if size < 1 then return "" end
 
   local t_stop = {mode="stop"}
-  --<Measures for W4.00.03>--
+  --<Measures for W4.00.03+>--
   local t_read = {mode="read", bytes=0, type="string"}
   --]]
 
@@ -188,7 +189,7 @@ local _avm_memrd = function(self, addr, size)
     local len = size
     if len > self.rdsplit then len = self.rdsplit end
     t_read.bytes = len
-    --<Measures for W4.00.03>--
+    --<Measures for W4.00.03+>--
     mes,res = i2c(t_read)
     i2c(t_stop)
     if mes ~= _r_OK then
@@ -229,7 +230,7 @@ local _avm_memwr = function(self, addr, wstr)
     local r,m = _devopen(self, a)
     if not r then return nil,m end
 
-    --<Measures for W4.00.03>--
+    --<Measures for W4.00.03+>--
     t_write.data = s
     if i2c(t_write) ~= _r_OK then r = nil end
     --]]
@@ -341,12 +342,7 @@ function ca.open(t)
 
   return {
       devid = dev,
-      --<Measures for W4.00.01>--
       i2cfreq = freq,
-      --]]
-      --[[ --<Measures for W4.00.03?>--
-      i2cfreq = freq .. "",
-      --]]
       addrbst = (adb - 1) * 8,
       rdsplit = rds,
       wrsplit = wrs,
@@ -479,7 +475,7 @@ function ca.config(t)
     while true do
       local ln = f:read(256)
       if not ln then break end
-      --<Measures for W4.00.03>--
+      --<Measures for W4.00.03+>--
       spi("write", ln)
       --]]
 

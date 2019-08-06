@@ -6,7 +6,7 @@
   @copyright The MIT License (MIT); (c) 2017-2019 J-7SYSTEM WORKS LIMITED.
 
   *Version release
-    v0.3.0726   s.osafune@j7system.jp
+    v0.3.0806   s.osafune@j7system.jp
 
   *Requirement FlashAir firmware version
     W4.00.03+
@@ -57,8 +57,9 @@ local jsonenc = require "cjson".encode
 -- モジュールオブジェクト
 cr = {}
 
--- バージョン
-function cr.version() return "0.3.0726" end
+-- バージョンとコピーライト
+function cr.version() return "0.3.0806" end
+function cr.copyright() return "(c)2017-2019 J-7SYSTEM WORKS LIMITED." end
 
 -- デバッグ表示メソッド（必要があれば外部で定義する）
 function cr.dbgprint(...) end
@@ -247,7 +248,7 @@ local _do_version = function()
     fa_version = config["VERSION"],
     fa_product = config["PRODUCT"],
     fa_vendor = config["VENDOR"],
-    copyright = "(c)2017,2018 J-7SYSTEM WORKS LIMITED."
+    copyright = cr.copyright()
   }
 end
 
